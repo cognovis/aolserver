@@ -38,6 +38,7 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 
 #include "nsd.h"
 
+#ifndef _WIN32
 #if defined(USE_DLSHL)
 #include <dl.h>
 #elif defined(USE_DYLD)
@@ -56,6 +57,7 @@ static char *dylderr = "";
 #endif
 #ifndef RTLD_NOW
 #define RTLD_NOW 0
+#endif
 #endif
 #endif
 
@@ -427,7 +429,9 @@ NsLoadModules(char *server)
 static void *
 DlOpen(char *file)
 {
-#if defined(USE_DYLD)
+#ifdef WIN32
+    return (void *) LoadLibrary(file);
+#elif defined(USE_DYLD)
     NSObjectFileImage		image;
     NSModule			module;
     NSObjectFileImageReturnCode	err;
@@ -506,7 +510,9 @@ DlSym2(void *handle, char *name)
 {
     void *symbol;
 
-#if defined(USE_DLSHL)
+#ifdef WIN32
+    symbol =  (void *) GetProcAddress((HMODULE) handle, name);
+#elif defined(USE_DLSHL)
     symbol = NULL;
     if (shl_findsym((shl_t *) &handle, name, TYPE_UNDEFINED, &symbol) == -1) {
 	symbol = NULL;
@@ -542,7 +548,9 @@ DlSym2(void *handle, char *name)
 static char *
 DlError(void)
 {
-#if defined(USE_DLSHL)
+#ifdef WIN32
+    return NsWin32ErrMsg(GetLastError());
+#elif defined(USE_DLSHL)
     return strerror(errno);
 #elif defined(USE_DYLD)
     return dylderr;
