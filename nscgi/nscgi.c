@@ -823,6 +823,7 @@ CgiExec(Cgi *cgiPtr, Ns_Conn *conn)
      * Set all the CGI specified variables.
      */
 
+    Ns_DStringInit(dsPtr);
     SetUpdate(cgiPtr->env, "SCRIPT_NAME", cgiPtr->name);
     if (cgiPtr->pathinfo != NULL && *cgiPtr->pathinfo != '\0') {
     	Ns_DString tmp;
