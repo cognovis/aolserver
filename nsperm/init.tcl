@@ -37,7 +37,9 @@
 #
 
 proc init_nsperm { } {
-    set dir "[ns_info home]/servers/[ns_info server]/modules/nsperm"
+
+    set default "[ns_info home]/servers/[ns_info server]/modules/nsperm"
+    set dir [ns_config "ns/server/[ns_info server]/module/nsperm" nspermdirectory $default]    
 
     #
     # Parse hosts.allow
