@@ -42,6 +42,7 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 
 #define LOG_COMBINED	1
 #define LOG_FMTTIME	2
+#define LOG_REQTIME     4
 #ifndef O_TEXT
 #define O_TEXT 0
 #endif
@@ -67,10 +68,6 @@ typedef struct {
     char          **extheaders;
 } Log;
 
-
-/*
- * Local functions defined in this file
- */
 static Ns_Callback LogRollCallback;
 static Ns_Callback LogCloseCallback;
 static Ns_TraceProc LogTrace;
@@ -84,8 +81,19 @@ static Tcl_CmdProc LogCmd;
 static Ns_TclInterpInitProc AddCmds;
 
 /*
- * Static variables defined in this file
+ * The following are used to capture the request's 
+ * start time, and then compute the delta just prior
+ * writing the access log entry for the request.
+ *
  */
+
+typedef struct Buf {
+    Ns_Time s_time;
+} Buf;
+
+static Ns_Tls tls;
+static Ns_FilterProc Filter;
+static Ns_Callback FreeBuf;
 
 
 /*
@@ -142,6 +150,7 @@ Ns_ModuleInit(char *server, char *module)
      */
 
     path = Ns_ConfigGetPath(server, module, NULL);
+
     logPtr->file = Ns_ConfigGet(path, "file");
     if (logPtr->file == NULL) {
     	logPtr->file = "access.log";
@@ -186,7 +195,11 @@ Ns_ModuleInit(char *server, char *module)
     if (opt) {
 	logPtr->flags |= LOG_COMBINED;
     }
-
+    if (Ns_ConfigGetBool(path, "logreqtime", &opt)) {
+        Ns_TlsAlloc(&tls, FreeBuf);
+        Ns_RegisterFilter(server, "*", "/*", Filter, NS_FILTER_POST_AUTH, NULL);
+        logPtr->flags |= LOG_REQTIME;
+    }
     if (!Ns_ConfigGetBool(path, "suppressquery", &logPtr->suppressquery)) {
 	logPtr->suppressquery = 0;
     }
@@ -251,8 +264,24 @@ LogTrace(void *arg, Ns_Conn *conn)
     Ns_DString     ds;
     register char *p;
     int            quote, n, status, i;
+    int            logReqTime = 0;
     char           buf[100];
     Log		  *logPtr = arg;
+    Ns_Time        now, diff;
+    Buf           *bufPtr; 
+
+    if (logPtr->flags & LOG_REQTIME) {
+
+        /*
+         * Compute the request's elapsed time.
+         */ 
+
+        if ((bufPtr = Ns_TlsGet(&tls)) != NULL) {
+            Ns_GetTime(&now);
+            Ns_DiffTime(&now, &bufPtr->s_time, &diff);
+            logReqTime = 1;
+        }
+    }
     
     Ns_DStringInit(&ds);
 
@@ -338,8 +367,18 @@ LogTrace(void *arg, Ns_Conn *conn)
     }
 
     /*
+     * Append the request's elapsed time (if enabled).
+     */
+
+    if (logReqTime) {
+        sprintf(buf, " %d.%ld", (int)diff.sec, diff.usec);   
+        Ns_DStringAppend(&ds, buf);
+    }
+
+    /*
      * Append the extended headers (if any).
      */
+
     for (i=0; logPtr->extheaders[i] != NULL; i++) {
 	if ((p = Ns_SetIGet(conn->headers, logPtr->extheaders[i]))) {
 	    Ns_DStringAppend(&ds, " \"");
@@ -742,3 +781,61 @@ LogConfigExtHeaders(Log *logPtr, char *path)
 
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * Filter --
+ *
+ *      Post-authorization filter to capture the start time for
+ *      each connection.
+ *
+ * Results:
+ *      NS_OK.
+ *
+ * Side effects:
+ *      Time is stored in thread-local storage.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+Filter(void *context, Ns_Conn *conn, int why)
+{
+    Buf *bufPtr;
+    Ns_Time now;
+
+    Ns_GetTime(&now);
+
+    if ((bufPtr = Ns_TlsGet(&tls)) == NULL) {
+        bufPtr = ns_malloc(sizeof(Buf));
+        Ns_TlsSet(&tls, bufPtr);
+    }
+
+    bufPtr->s_time = now;
+
+    return NS_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * FreeBuf --
+ *
+ *      Frees per-thread buffers at thread cleanup time.
+ *
+ * Results:
+ *      None.
+ *
+ * Side effects:
+ *      Allocated buffer (from the registered filter) is freed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+FreeBuf(void *arg)
+{
+    Buf *bufPtr = arg;
+
+    ns_free(bufPtr);
+}
