@@ -466,7 +466,7 @@ Ns_Main(int argc, char **argv, Ns_ServerInitProc *initProc)
 
     nsconf.nsd = NsTclFindExecutable(argv[0]);
     if (nsconf.configfmt == 't') {
-    	NsConfigEval(config);
+    	NsConfigEval(config, argc, argv, optind);
     }
     ns_free(config);
 
