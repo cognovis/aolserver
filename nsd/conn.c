@@ -674,6 +674,30 @@ Ns_ConnId(Ns_Conn *conn)
     return connPtr->id;
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * Ns_ConnStartTime --
+ *
+ *      Return the Start Time
+ *
+ * Results:
+ *      Ns_Time value
+ *
+ * Side effects:
+ *      None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Ns_Time *
+Ns_ConnStartTime(Ns_Conn *conn)
+{
+    Conn *connPtr = (Conn *) conn;
+
+    return &connPtr->tqueue;
+}
+
 
 /*
  *----------------------------------------------------------------------
