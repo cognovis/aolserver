@@ -1422,7 +1422,6 @@ NsTclConnCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
     if (argc >= 2 && STREQ(argv[1], "urlv")) {
 	return UrlVHackCmd(dummy, interp, argc, argv);
     }
-#if 0
     if (argc == 3) {
 	/*
 	 * They must have specified a conn ID.  Make sure it's a valid
@@ -1438,7 +1437,6 @@ NsTclConnCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
                          argv[0], " cmd ", NULL);
         return TCL_ERROR;
     }
-#endif
     connPtr = (Conn *) Ns_GetConn();
     if (STREQ(argv[1], "isconnected")) {
 	Tcl_SetResult(interp, (connPtr == NULL) ? "0" : "1", TCL_STATIC);
