@@ -42,12 +42,16 @@ Ns_SetUrlToFileProc, Ns_UrlIsDir, Ns_UrlIsFile, Ns_UrlToFile \- URL to file mapp
 .nf
 \fB#include "ns.h"\fR
 .sp
+void
 \fBNs_SetUrlToFileProc\fR(\fIchar *server, Ns_UrlToFileProc *procPtr\fR)
 .sp
+int
 \fBNs_UrlIsDir\fR(\fIchar *server, char *url\fR)
 .sp
+int
 \fBNs_UrlIsFile\fR(\fIchar *server, char *url\fR)
 .sp
+int
 \fBNs_UrlToFile\fR(\fINs_DString *dsPtr, char *server, char *url\fR)
 .BE
 

@@ -42,10 +42,13 @@ Ns_MakePath, Ns_NormalizePath, Ns_PathIsAbsolute \- Pathname procedures
 .nf
 \fB#include "ns.h"\fR
 .sp
+char *
 \fBNs_MakePath\fR(\fINs_DString *dest, ...\fR)
 .sp
+char *
 \fBNs_NormalizePath\fR(\fINs_DString *dsPtr, char *path\fR)
 .sp
+int
 \fBNs_PathIsAbsolute\fR(\fIchar *path\fR)
 .BE
 

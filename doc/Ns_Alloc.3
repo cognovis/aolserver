@@ -42,17 +42,21 @@ ns_calloc, ns_free, ns_malloc, ns_realloc, Ns_Calloc, Ns_Free, Ns_Malloc, Ns_Rea
 .nf
 \fB#include "ns.h"\fR
 .sp
-\fBns_calloc\fR(\fIsize_t num, size_t esize\fR)
+void *
 \fBNs_Calloc\fR(\fIsize_t num, size_t esize\fR)
+\fBns_calloc\fR(\fIsize_t num, size_t esize\fR)
 .sp
-\fBns_free\fR(\fIvoid *ptr\fR)
+void
 \fBNs_Free\fR(\fIvoid *ptr\fR)
+\fBns_free\fR(\fIvoid *ptr\fR)
 .sp
-\fBns_malloc\fR(\fIsize_t size\fR)
+void *
 \fBNs_Malloc\fR(\fIsize_t size\fR)
+\fBns_malloc\fR(\fIsize_t size\fR)
 .sp
-\fBns_realloc\fR(\fIvoid *ptr, size_t size\fR)
+void *
 \fBNs_Realloc\fR(\fIvoid *ptr, size_t size\fR)
+\fBns_realloc\fR(\fIvoid *ptr, size_t size\fR)
 .BE
 
 .SH DESCRIPTION

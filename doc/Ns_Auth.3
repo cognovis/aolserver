@@ -42,13 +42,17 @@ Ns_AuthorizeRequest, Ns_AuthorizeUser, Ns_SetRequestAuthorizeProc, Ns_SetUserAut
 .nf
 \fB#include "ns.h"\fR
 .sp
+int
 \fBNs_AuthorizeRequest\fR(\fIchar *server, char *method, char *url,
         char *user, char *passwd, char *peer\fR)
 .sp
+int
 \fBNs_AuthorizeUser\fR(\fIchar *user, char *passwd\fR)
 .sp
+void
 \fBNs_SetRequestAuthorizeProc\fR(\fIchar *server, Ns_RequestAuthorizeProc *procPtr\fR)
 .sp
+void
 \fBNs_SetUserAuthorizeProc\fR(\fINs_UserAuthorizeProc *procPtr\fR)
 .BE
 

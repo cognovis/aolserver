@@ -42,20 +42,28 @@ Ns_ThreadAlloc, Ns_ThreadCalloc, Ns_ThreadFree, Ns_ThreadMalloc, Ns_ThreadPool, 
 .nf
 \fB#include "ns.h"\fR
 .sp
+void *
 \fBNs_ThreadAlloc\fR(\fIsize_t size\fR)
 .sp
+void *
 \fBNs_ThreadCalloc\fR(\fIsize_t nelem, size_t elsize\fR)
 .sp
+void
 \fBNs_ThreadFree\fR(\fIvoid *ptr\fR)
 .sp
+void *
 \fBNs_ThreadMalloc\fR(\fIsize_t size\fR)
 .sp
+Ns_Pool *
 \fBNs_ThreadPool\fR(\fIvoid\fR)
 .sp
+void *
 \fBNs_ThreadRealloc\fR(\fIvoid *ptr, size_t size\fR)
 .sp
+char *
 \fBNs_ThreadStrCopy\fR(\fIchar *str\fR)
 .sp
+char *
 \fBNs_ThreadStrDup\fR(\fIchar *str\fR)
 .BE
 
