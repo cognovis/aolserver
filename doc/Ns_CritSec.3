@@ -98,9 +98,12 @@ critical section memory returned to the heap.
 .TP
 \fBNs_CsEnter\fR(\fINs_Cs *csPtr\fR)
 
-Lock a critical section object, initializing it first if needed. The
-thread may wait on the critical section condition variable if the
-critical section is already owned by another thread.
+Lock a critical section object, initializing it first if needed.  If
+the critical section is in use by another thread, the calling thread
+will block until it is no longer so.
+
+Note that critical sections are recursive and must be exited the same
+number of times as they were entered.
 .TP
 \fBNs_CsInit\fR(\fINs_Cs *csPtr\fR)
 
