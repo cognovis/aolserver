@@ -276,9 +276,6 @@ NsInstallService(char *server)
 	Ns_DStringInit(&cmd);
 	Ns_DStringVarAppend(&cmd, "\"", nsd, "\"",
 	    " -S -s ", server, carg, "\"", config, "\"", NULL);
-    	if (nsMemPools) {
-	    Ns_DStringAppend(&cmd, " -z");
-	}
 	GetServiceName(&name, server);
 	Ns_Log(Notice, "nswin32: installing %s service: %s",
 	    name.string, cmd.string);
