@@ -64,6 +64,9 @@ install-tests:
 install-doc:
 	cd doc && /bin/sh ./install-doc $(AOLSERVER)
 
+test: all
+	cd tests/new && ./all.tcl
+
 clean:
 	@for i in $(dirs); do \
 		(cd $$i && $(MAKE) clean) || exit 1; \
