@@ -453,6 +453,23 @@ NsInitServer(char *server, Ns_ServerInitProc *initProc)
     servPtr->adp.cachesize = n;
 
     /*
+     * Initialize on-the-fly compression support for ADP.
+     */
+     
+    path = Ns_ConfigGetPath(server, NULL, "adp", "compress", NULL);
+    if (!Ns_ConfigGetBool(path, "enable", &servPtr->adp.compress.enable)) {
+    	servPtr->adp.compress.enable = 0;
+    }
+    if (!Ns_ConfigGetInt(path, "level", &n) || n < 1 || n > 9) {
+	n = 4;
+    }
+    servPtr->adp.compress.level = n;
+    if (!Ns_ConfigGetInt(path, "minsize", &n) || n < 0) {
+	n = 0;
+    }
+    servPtr->adp.compress.minsize = n;
+
+    /*
      * Initialize the page and tag tables and locks.
      */
 
@@ -467,6 +484,7 @@ NsInitServer(char *server, Ns_ServerInitProc *initProc)
      * Register ADP for any requested URLs.
      */
 
+    path = Ns_ConfigGetPath(server, NULL, "adp", NULL);
     set = Ns_ConfigGetSection(path);
     for (i = 0; set != NULL && i < Ns_SetSize(set); ++i) {
 	key = Ns_SetKey(set, i);
