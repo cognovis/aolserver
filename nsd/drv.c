@@ -307,7 +307,7 @@ RunDriver(void *arg)
     Ns_Log(Notice, "drv: driver '%s' accepting '%s'", dPtr->label, loc);
 
     while ((status = ((*dPtr->acceptProc)(dData, &cData))) == NS_OK) {
-	if (Ns_QueueConn(dData, cData) != NS_OK) {
+	if (Ns_QueueConn(dPtr, cData) != NS_OK) {
 	   (*dPtr->closeProc)(dData);
 	}
     }
