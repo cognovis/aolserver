@@ -32,13 +32,40 @@
 #
 
 #
-# form.tcl -- Handle url-encoded or multi-part data for forms
+# form.tcl -- Handle url-encoded or multi-part forms.
+#
+# Multi-part forms are described in RFC 1867:
+#
+#	http://www.ietf.org/rfc/rfc1867.txt
+#
+# Briefly, use:
+#
+#	<form enctype="multipart/form-data" action="url" method=post>
+#	First file: <input name="file1" type="file">
+#	Second file: <input name="file2" type="file">
+#	<input type="submit">
+#	</form>
+#
+# and then access with:
+#
+#	set tmpfile1 [ns_getformfile file1]
+#	set tmpfile2 [ns_getformfile file2]
+#	set fp1 [open $tmpfile1]
+#	set fp2 [open $tmpfile2]
+#
+# Temp files created by ns_getform are removed when the connection closes.
 #
 
 
+#
+# ns_queryget --
+#
+#	Get a value from the http form.
+#
+
 proc ns_queryget {key {value ""}}  {
     set form [ns_getform]
-    if { $form != "" } {
+    if {$form != ""} {
 	set tmp [ns_set iget $form $key]
 	if [string length $tmp] {
 	    set value $tmp
@@ -46,6 +73,13 @@ proc ns_queryget {key {value ""}}  {
     }
     return $value
 }
+
+
+#
+# ns_querygetall --
+#
+#	Get all values of the same key name from the http form.
+#
 
 proc ns_querygetall {key {def_result ""}} {
     set form [ns_getform]
@@ -67,6 +101,7 @@ proc ns_querygetall {key {def_result ""}} {
      }
      return $result
 }
+
 
 #
 # ns_queryexists --
@@ -91,7 +126,7 @@ proc ns_queryexists { key } {
 #	into temp files if necessary.
 #
 
-proc ns_getform { }  {
+proc ns_getform {} {
     global _ns_form
 
     if ![info exists _ns_form] {
@@ -100,7 +135,7 @@ proc ns_getform { }  {
 	set type [ns_set iget [ns_conn headers] content-type]
 	
 	## MSIE redirected POST bug workaround.
-	if {![string match "POST" [ns_conn method]] || \
+	if {![string match "POST" $method] || \
 		![string match "*multipart/form-data*" \
 		      [string tolower $type]] } {
 	    
@@ -117,6 +152,7 @@ proc ns_getform { }  {
 		set tmpfile [ns_tmpnam]
 		set fp [ns_openexcl $tmpfile]
 	    }
+            fconfigure $fp -translation binary -encoding binary
 	    ns_conncptofp $fp
 	    seek $fp 0
 	    set _ns_form [_ns_parseformfp $fp $type]
@@ -130,12 +166,31 @@ proc ns_getform { }  {
 
 
 #
+# ns_getformfile --
+#
+#	Return a tempfile for a form file field.
+#
+
+proc ns_getformfile {name} {
+    global _ns_form_files
+
+    ns_getform
+    if {![info exists _ns_form_files($name)]} {
+	return ""
+    }
+    return $_ns_form_files($name)
+}
+
+
+#
 # _ns_parseformfp --
 #
 #	Parse a multi-part form data file.
 #
 
 proc _ns_parseformfp {fp contentType} {
+    global _ns_form_files
+
     # parse the boundary out of the content-type header
 
     regexp -nocase {boundary=(.*)$} $contentType 1 b
@@ -199,16 +254,15 @@ proc _ns_parseformfp {fp contentType} {
 		set tmpfile [ns_tmpnam]
 		set tmp [ns_openexcl $tmpfile]
 	    }
-
 	    if { $length > 0 } {
 		seek $fp $start
 		ns_cpfp $fp $tmp $length
 	    }
-
 	    ns_atclose "ns_unlink -nocomplain $tmpfile"
-
 	    close $tmp
 	    seek $fp $end
+	    set _ns_form_files($name) $tmpfile
+	    # NB: Potential security risk, access file via ns_getformfile.
 	    ns_set put $form $name.tmpfile $tmpfile
 
 	} else {
@@ -243,6 +297,7 @@ proc _ns_parseformfp {fp contentType} {
 #
 #	Open a file with exclusive rights.  This call will fail if 
 #	the file already exists in which case "" is returned.
+#
 
 proc ns_openexcl file {
     if [catch { set fp [open $file {RDWR CREAT EXCL} ] } err] {
