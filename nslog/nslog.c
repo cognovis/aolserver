@@ -42,6 +42,9 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 
 #define LOG_COMBINED	1
 #define LOG_FMTTIME	2
+#ifndef O_TEXT
+#define O_TEXT 0
+#endif
 
 /*
  * Exported variables
@@ -128,7 +131,7 @@ Ns_ModuleInit(char *server, char *module)
     logPtr = ns_calloc(1, sizeof(Log));
     logPtr->fd = -1;
     logPtr->module = module;
-    Ns_MutexInit2(&logPtr->lock, "nslog");
+    Ns_MutexInit(&logPtr->lock);
     Ns_DStringInit(&logPtr->buffer);
 
     /*
