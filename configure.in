@@ -91,6 +91,13 @@ then
 fi
 AC_MSG_RESULT($duphigh)
 
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>],[
+struct msghdr msg;
+int *i = msg.msg_controllen;
+],AC_DEFINE(HAVE_CMMSG),)
+
 #
 # Create Makefile.global.
 #
