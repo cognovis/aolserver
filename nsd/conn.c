@@ -1167,7 +1167,6 @@ Ns_ParseHeader(Ns_Set *set, char *line, Ns_HeaderCaseDisposition disp)
 Ns_Set  *
 Ns_ConnGetQuery(Ns_Conn *conn)
 {
-    void 	   *enc;
     Ns_DString     *dsPtr;
     Conn           *connPtr = (Conn *) conn;
     
