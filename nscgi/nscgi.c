@@ -50,12 +50,6 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 #else
 #define DEVNULL	    "/dev/null"
 extern char **Ns_GetEnviron(void);
-#else
-#ifdef __sgi
-extern char   *environ[];
-#else
-extern char   **environ;
-#endif
 #endif
 
 /*
