@@ -305,7 +305,7 @@ HttpOpen(char *method, char *url, Ns_Set *hdrs, char *body)
             *file = '/';
         }
         Ns_DStringAppend(&httpPtr->ds, method);
-	Ns_StrToUpper(Ns_DStringValue(&httpPtr->ds));
+        Ns_StrToUpper(Ns_DStringValue(&httpPtr->ds));
         Ns_DStringVarAppend(&httpPtr->ds, " ", file ? file : "/", " HTTP/1.0\r\n", NULL);
         if (file != NULL) {
             *file = '\0';
