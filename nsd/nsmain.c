@@ -310,17 +310,9 @@ Ns_Main(int argc, char **argv, Ns_ServerInitProc *initProc)
 
     /*
      * Verify the uid/gid args.
+     * Reversed the order so this will actually work.
+     * Jon Griffin <jon@jongriffin.com> 01/27/2001
      */
-
-    if (garg != NULL) {
-	gid = Ns_GetGid(garg);
-	if (gid < 0) {
-	    gid = atoi(garg);
-	    if (gid == 0) {
-		Ns_Fatal("nsmain: invalid group '%s'", garg);
-	    }
-	}
-    }
     if (uarg != NULL) {
 	uid = Ns_GetUid(uarg);
 	gid = Ns_GetUserGid(uarg);
@@ -331,7 +323,17 @@ Ns_Main(int argc, char **argv, Ns_ServerInitProc *initProc)
 	    Ns_Fatal("nsmain: invalid user '%s'", uarg);
 	}
     }
-
+    
+    if (garg != NULL) {
+	gid = Ns_GetGid(garg);
+	if (gid < 0) {
+	    gid = atoi(garg);
+	    if (gid == 0) {
+		Ns_Fatal("nsmain: invalid group '%s'", garg);
+	    }
+	}
+    }
+    
     /*
      * AOLserver uses select() extensively so adjust the open file
      * limit to be no greater than FD_SETSIZE on Unix.  It's possible
