@@ -191,8 +191,10 @@ Ns_ModuleInit(char *server, char *module)
     if (opt) {
 	logPtr->flags |= LOG_COMBINED;
     }
+
+    Ns_TlsAlloc(&tls, FreeBuf);
+
     if (Ns_ConfigGetBool(path, "logreqtime", &opt)) {
-        Ns_TlsAlloc(&tls, FreeBuf);
         Ns_RegisterFilter(server, "*", "/*", Filter, NS_FILTER_POST_AUTH, NULL);
         logPtr->flags |= LOG_REQTIME;
     }
