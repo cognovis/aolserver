@@ -554,7 +554,7 @@ a table, or shows "No rows in result." if there are no rows:
 <remember name="hasrows_header">
 <table>
 </remember>
-<remember name="hasrows_rows>
+<remember name="hasrows_rows">
 <tr>
 	<td><%=$column%></td>
 </tr>
