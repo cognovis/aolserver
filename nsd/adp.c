@@ -358,12 +358,6 @@ NsAdpEval(Tcl_Interp *interp, char *file, char *chunks)
     AdpData *adPtr;
 
     adPtr = NsAdpGetData();
-    if (Ns_CheckStack() != NS_OK) {
-        interp->result =  "danger: stack grown too large (recursive adp?)";
-	adPtr->exception = ADP_OVERFLOW;
-        return TCL_ERROR;
-    }
-
     if (file == NULL) {
 	file = "<inlined script>";
     }

@@ -214,7 +214,7 @@ Ns_LogTime2(char *timeBuf, int gmtoff)
     if (!gmtoff) {
     	strcat(timeBuf+n, "]");
     } else {
-#ifdef NO_TIMEZONE
+#ifdef HAVE_TM_GMTOFF
 	gmtoffset = ptm->tm_gmtoff / 60;
 #else
 	gmtoffset = -timezone / 60;

@@ -152,9 +152,8 @@ NsConfInit(char *server)
      */
 
     i = GetInt(PARAMS, "stacksize", THREAD_STACKSIZE_INT);
-    nsThreadStackSize   = GetInt("ns/threads", "stacksize", i);
-    nsThreadMutexMeter  = GetBool("ns/threads", "mutexmeter", THREAD_MUTEXMETER_BOOL);
-    
+    i = GetInt("ns/threads", "stacksize", i);
+    Ns_ThreadStackSize(i);
 
     /*
      * nsmain.c

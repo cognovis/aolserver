@@ -31,7 +31,7 @@ set bindir                 [file dirname [ns_info nsd]]
 set pageroot               ${homedir}/servers/${servername}/pages
 set directoryfile          index.adp,index.html,index.htm
 
-set ext [info sharedlibextension]
+set ext .so
 
 # nsssl: Only loads if keyfile.pem and certfile.pem exist.
 #set sslmodule              nsssl${ext}  ;# Domestic 128-bit/1024-bit SSL.
