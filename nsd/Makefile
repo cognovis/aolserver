@@ -30,11 +30,9 @@
 #
 
 INIT	= init.tcl
-#INSTALL = install-init
 LIB     = nsd
 PGM	= nsd
 PGMOBJS	= main.o
-#LIBINIT = NsdInit
 HDRS	= nsd.h
 
 LOBJS = \
@@ -53,7 +51,7 @@ LOBJS = \
 
 LIBOBJS=$(LOBJS) stamp.o
 
-include ../include/Makefile.module
+include ../include/Makefile.build
 
 stamp.o: $(LOBJS)
 	$(CC) -c -o stamp.o stamp.c

@@ -40,4 +40,4 @@ LIBOBJS = \
 	rwlock.o reentrant.o sema.o thread.o tls.o signal.o	\
 	compat.o time.o fork.o
 
-include ../include/Makefile.module
+include ../include/Makefile.build
