@@ -49,6 +49,8 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 #define DEVNULL	    "nul:"
 #else
 #define DEVNULL	    "/dev/null"
+extern char **Ns_GetEnviron(void);
+#else
 #ifdef __sgi
 extern char   *environ[];
 #else
@@ -273,9 +275,11 @@ Ns_ModuleInit(char *server, char *module)
         i = 0;
     }
     if (i) {
+	extern char **Ns_GetEnviron(void);
+	char **envp = Ns_GetEnviron();
         modPtr->sysEnv = Ns_SetCreate(NULL);
-        for (i = 0; environ[i] != NULL; ++i) {
-            Ns_DStringAppend(&ds, environ[i]);
+        for (i = 0; envp[i] != NULL; ++i) {
+            Ns_DStringAppend(&ds, envp[i]);
             key = ds.string;
             value = strchr(key, '=');
             if (value != NULL) {
