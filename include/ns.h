@@ -717,6 +717,7 @@ NS_EXTERN int Ns_ExecArgv(char *exec, char *dir, int fdin, int fdout, char **arg
 		       Ns_Set *env);
 NS_EXTERN int Ns_WaitProcess(int pid);
 NS_EXTERN int Ns_WaitForProcess(int pid, int *statusPtr);
+NS_EXTERN char **Ns_GetEnviron(void);
 
 /*
  * fastpath.c:
