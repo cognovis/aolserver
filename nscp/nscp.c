@@ -39,28 +39,37 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 
 #include "ns.h"
 
-/* 
- * The following structure is used to pass arguments to
- * EvalThread from AcceptProc.
+/*
+ * The following structure is allocated each instance of
+ * the loaded module.
  */
- 
-typedef struct Arg {
-    int id;
-    SOCKET sock;
-    struct sockaddr_in sa;
-} Arg;
+
+typedef struct Mod {
+    Tcl_HashTable users;
+    char *server;
+    char *addr;
+    int port;
+    int echo;
+    int commandLogging;
+} Mod;
 
 static Ns_ThreadProc EvalThread;
+
+/* 
+ * The following structure is allocated for each session.
+ */
+ 
+typedef struct Sess {
+    Mod *modPtr;
+    int id;
+    int sock;
+    struct sockaddr_in sa;
+} Sess;
+
 static Ns_SockProc AcceptProc;
 static Tcl_CmdProc ExitCmd;
-static int Login(SOCKET sock, Tcl_DString *unameDS);
-static int GetLine(SOCKET sock, char *prompt, Tcl_DString *dsPtr, int echo);
-static char *server;
-static Tcl_HashTable users;
-static char *addr;
-static int port;
-static int fEchoPw;
-static int cpCommandLogging;
+static int Login(Sess *sessPtr, Tcl_DString *unameDS);
+static int GetLine(int sock, char *prompt, Tcl_DString *dsPtr, int echo);
 static Ns_ArgProc ArgProc;
 
 /*
@@ -82,7 +91,7 @@ static unsigned char dont_echo[]  = {TN_IAC, TN_DONT, TN_ECHO};
 static unsigned char will_echo[]  = {TN_IAC, TN_WILL, TN_ECHO};
 static unsigned char wont_echo[]  = {TN_IAC, TN_WONT, TN_ECHO};
 
-NS_EXPORT int Ns_ModuleVersion = 1;
+int Ns_ModuleVersion = 1;
 
 
 /*
@@ -103,12 +112,13 @@ NS_EXPORT int Ns_ModuleVersion = 1;
  *----------------------------------------------------------------------
  */
  
-NS_EXPORT int
-Ns_ModuleInit(char *s, char *module)
+int
+Ns_ModuleInit(char *server, char *module)
 {
-    char *path, *pass, *user, *key, *end;
-    int i, new;
-    SOCKET lsock;
+    Mod *modPtr;
+    char *path, *addr, *pass, *user, *key, *end;
+    int i, new, port;
+    int lsock;
     Ns_Set *set;
     Tcl_HashEntry *hPtr;
 
@@ -116,31 +126,34 @@ Ns_ModuleInit(char *s, char *module)
      * Create the listening socket and callback.
      */
 
-    server = s;
     path = Ns_ConfigGetPath(server, module, NULL);
-
-    if ( ((addr = Ns_ConfigGet(path, "address")) == NULL)
+    if (((addr = Ns_ConfigGetValue(path, "address")) == NULL)
 	 || (!Ns_ConfigGetInt(path, "port", &port)) )  {
 	Ns_Log(Error, "nscp: address and port must be specified in config");
 	return NS_ERROR;
     }
-    
-    if (!Ns_ConfigGetBool(path, "echopassword", &fEchoPw)) {
-    	fEchoPw = 1;
-    }
-
-    if (!Ns_ConfigGetBool(path, "cpcmdlogging", &cpCommandLogging)) {
-      cpCommandLogging = 1; /* Default to on */
-    }
-
     lsock = Ns_SockListen(addr, port);
-    if (lsock == INVALID_SOCKET) {
+    if (lsock == -1) {
 	Ns_Log(Error, "nscp: could not listen on %s:%d", addr, port);
 	return NS_ERROR;
     }
     Ns_Log(Notice, "nscp: listening on %s:%d", addr, port);
-    Ns_RegisterProcInfo((void *)AcceptProc, "nscp", ArgProc);
-    Ns_SockCallback(lsock, AcceptProc, NULL, NS_SOCK_READ|NS_SOCK_EXIT);
+
+    /*
+     * Create a new Mod structure for this instance.
+     */
+
+    modPtr = ns_malloc(sizeof(Mod));
+    modPtr->server = server;
+    modPtr->addr = addr;
+    modPtr->port = port;
+    if (!Ns_ConfigGetBool(path, "echopassword", &modPtr->echo)) {
+    	modPtr->echo = 1;
+    }
+
+    if (!Ns_ConfigGetBool(path, "cpcmdlogging", &modPtr->commandLogging)) {
+        modPtr->commandLogging = 1; /* Default to on */
+    }
 
     /*
      * Initialize the hash table of authorized users.  Entry values
@@ -151,44 +164,39 @@ Ns_ModuleInit(char *s, char *module)
      * password separated by colons).
      */
 
-    Tcl_InitHashTable(&users, TCL_STRING_KEYS);
+    Tcl_InitHashTable(&modPtr->users, TCL_STRING_KEYS);
     path = Ns_ConfigGetPath(server, module, "users", NULL);
     set = Ns_ConfigGetSection(path);
     for (i = 0; set != NULL && i < Ns_SetSize(set); ++i) {
-	pass = NULL;
 	key = Ns_SetKey(set, i);
 	user = Ns_SetValue(set, i);
-	if (STRIEQ(key, "user")) {
-	    pass = strchr(user, ':');
-	    if (pass == NULL) {
-	    	Ns_Log(Error, "nscp: invalid user entry: %s", user);
-		continue;
-	    }
-	} else if (!STRIEQ(key, "permuser")) {
-	    Ns_Log(Error, "nscp: invalid user key: %s", key);
+	if (!STRIEQ(key, "user") || (pass = strchr(user, ':')) == NULL) {
 	    continue;
 	}
-	if (pass != NULL) {
-	    *pass = '\0';
+	*pass = '\0';
+	hPtr = Tcl_CreateHashEntry(&modPtr->users, user, &new);
+	if (new) {
+	    Ns_Log(Notice, "nscp: added user: %s", user);
+	} else {
+	    Ns_Log(Warning, "nscp: duplicate user: %s", user);
+	    ns_free(Tcl_GetHashValue(hPtr));
 	}
-	hPtr = Tcl_CreateHashEntry(&users, user, &new);
-	Ns_Log(Notice, "nscp: added user: %s", user);
-	if (pass != NULL) {
-	    *pass++ = ':';
-	    end = strchr(pass, ':');
-	    if (end != NULL) {
-		*end = '\0';
-	    }
-	    pass = ns_strdup(pass);
-	    if (end != NULL) {
-		*end = ':';
-	    }
+	*pass++ = ':';
+	end = strchr(pass, ':');
+	if (end != NULL) {
+	    *end = '\0';
+	}
+	pass = ns_strdup(pass);
+	if (end != NULL) {
+	    *end = ':';
 	}
 	Tcl_SetHashValue(hPtr, pass);
     }
-    if (users.numEntries == 0) {
+    if (modPtr->users.numEntries == 0) {
 	Ns_Log(Warning, "nscp: no authorized users");
     }
+    Ns_SockCallback(lsock, AcceptProc, modPtr, NS_SOCK_READ|NS_SOCK_EXIT);
+    Ns_RegisterProcInfo((void *)AcceptProc, "nscp", ArgProc);
 
     return NS_OK;
 }
@@ -213,11 +221,12 @@ Ns_ModuleInit(char *s, char *module)
 static void
 ArgProc(Tcl_DString *dsPtr, void *arg)
 {
+    Mod *modPtr = arg;
     char buf[20];
 
-    sprintf(buf, "%d", port);
+    sprintf(buf, "%d", modPtr->port);
     Tcl_DStringStartSublist(dsPtr);
-    Tcl_DStringAppendElement(dsPtr, addr);
+    Tcl_DStringAppendElement(dsPtr, modPtr->addr);
     Tcl_DStringAppendElement(dsPtr, buf);
     Tcl_DStringEndSublist(dsPtr);
 }
@@ -240,27 +249,29 @@ ArgProc(Tcl_DString *dsPtr, void *arg)
  */
 
 static int
-AcceptProc(SOCKET lsock, void *ignored, int why)
+AcceptProc(int lsock, void *arg, int why)
 {
-    Arg *aPtr;
+    Mod *modPtr = arg;
+    Sess *sessPtr;
     int len;
     static int next;
 
     if (why == NS_SOCK_EXIT) {
 	Ns_Log(Notice, "nscp: shutdown");
-	ns_sockclose(lsock);
+	close(lsock);
 	return NS_FALSE;
     }
-    aPtr = ns_malloc(sizeof(Arg));
+    sessPtr = ns_malloc(sizeof(Sess));
+    sessPtr->modPtr = modPtr;
     len = sizeof(struct sockaddr_in);
-    aPtr->sock = Ns_SockAccept(lsock, (struct sockaddr *) &aPtr->sa, &len);
-    if (aPtr->sock == INVALID_SOCKET) {
+    sessPtr->sock = Ns_SockAccept(lsock, (struct sockaddr *) &sessPtr->sa, &len);
+    if (sessPtr->sock == -1) {
 	Ns_Log(Error, "nscp: accept() failed: %s",
-	       ns_sockstrerror(ns_sockerrno));
-	ns_free(aPtr);
+	       strerror(errno));
+	ns_free(sessPtr);
     } else {
-	aPtr->id = ++next;
-	Ns_ThreadCreate(EvalThread, (void *) aPtr, 0, NULL);
+	sessPtr->id = ++next;
+	Ns_ThreadCreate(EvalThread, sessPtr, 0, NULL);
     }
     return NS_TRUE;
 }
@@ -290,25 +301,27 @@ EvalThread(void *arg)
     Tcl_DString unameDS;
     char buf[64], *res;
     int n, len, ncmd, stop;
-    Arg *aPtr = (Arg *) arg;
+    Sess *sessPtr = arg;
+    char *server = sessPtr->modPtr->server;
 
     /*
      * Initialize the thread and login the user.
      */
      
+    interp = NULL;
     Tcl_DStringInit(&ds);
     Tcl_DStringInit(&unameDS);
-    sprintf(buf, "-nscp:%d-", aPtr->id);
+    sprintf(buf, "-nscp:%d-", sessPtr->id);
     Ns_ThreadSetName(buf);
-    Ns_Log(Notice, "nscp: connect: %s", ns_inet_ntoa(aPtr->sa.sin_addr));
-    if (!Login(aPtr->sock, &unameDS)) {
+    Ns_Log(Notice, "nscp: connect: %s", ns_inet_ntoa(sessPtr->sa.sin_addr));
+    if (!Login(sessPtr, &unameDS)) {
 	goto done;
     }
 
     /*
      * Now, update the thread name to include username info.
      */
-    sprintf(buf, "-nscp:%s:%d-", Tcl_DStringValue(&unameDS), aPtr->id);
+    sprintf(buf, "-nscp:%s:%d-", Tcl_DStringValue(&unameDS), sessPtr->id);
     Ns_ThreadSetName(buf);
 
     /*
@@ -332,7 +345,7 @@ EvalThread(void *arg)
 retry:
 	sprintf(buf, "%s:nscp %d> ", server, ncmd);
 	while (1) {
-	    if (!GetLine(aPtr->sock, buf, &ds, 1)) {
+	    if (!GetLine(sessPtr->sock, buf, &ds, 1)) {
 		goto done;
 	    }
 	    if (Tcl_CommandComplete(ds.string)) {
@@ -347,33 +360,35 @@ retry:
 	    goto retry; /* Empty command - try again. */
 	}
 
-        if( cpCommandLogging ) {
-          Ns_Log(Notice, " %d> %s", ncmd, ds.string );
+        if (sessPtr->modPtr->commandLogging) {
+            Ns_Log(Notice, " %d> %s", ncmd, ds.string);
         }
 
-	if (Tcl_Eval(interp, ds.string) != TCL_OK) {
+	if (Tcl_RecordAndEval(interp, ds.string, 0) != TCL_OK) {
 	    Ns_TclLogError(interp);
 	}
 	Tcl_AppendResult(interp, "\r\n", NULL);
-	res = interp->result;
+	res = Tcl_GetStringResult(interp);
 	len = strlen(res);
 	while (len > 0) {
-	    if ((n = send(aPtr->sock, res, len, 0)) <= 0) goto done;
+	    if ((n = send(sessPtr->sock, res, len, 0)) <= 0) goto done;
 	    len -= n;
 	    res += n;
 	}
 
-        if( cpCommandLogging ) {
-          Ns_Log(Notice, " %d> Command Completed.", ncmd );
+        if (sessPtr->modPtr->commandLogging) {
+            Ns_Log(Notice, " %d> Command Completed.", ncmd);
         }
     }
 done:
     Tcl_DStringFree(&ds);
     Tcl_DStringFree(&unameDS);
-    Ns_TclDeAllocateInterp(interp);
-    Ns_Log(Notice, "nscp: disconnect: %s", ns_inet_ntoa(aPtr->sa.sin_addr));
-    ns_sockclose(aPtr->sock);
-    ns_free(aPtr);
+    if (interp != NULL) {
+    	Ns_TclDeAllocateInterp(interp);
+    }
+    Ns_Log(Notice, "nscp: disconnect: %s", ns_inet_ntoa(sessPtr->sa.sin_addr));
+    close(sessPtr->sock);
+    ns_free(sessPtr);
 }
 
 
@@ -395,11 +410,12 @@ done:
  */
 
 static int
-GetLine(SOCKET sock, char *prompt, Tcl_DString *dsPtr, int echo)
+GetLine(int sock, char *prompt, Tcl_DString *dsPtr, int echo)
 {
-    char buf[2048];
+    unsigned char buf[2048];
     int n;
     int result = 0;
+    int retry = 0;
 
     /*
      * Suppress output on things like password prompts.
@@ -445,6 +461,16 @@ GetLine(SOCKET sock, char *prompt, Tcl_DString *dsPtr, int echo)
 	    } else if (buf[1] == TN_IP) {
 		result = 0;
 		goto bail;
+            } else if ((buf[1] == TN_WONT) && (retry < 2)) {
+                /*
+                 * It seems like the flush at the bottom of this func
+                 * does not always get all the acks, thus an echo ack
+                 * showing up here. Not clear why this would be.  Need
+                 * to investigate further. For now, breeze past these
+                 * (within limits).
+                 */
+                retry++;
+                continue;
 	    } else {
 		Ns_Log(Warning, "nscp: "
 		       "unsupported telnet IAC code received from client");
@@ -479,13 +505,13 @@ GetLine(SOCKET sock, char *prompt, Tcl_DString *dsPtr, int echo)
  *  	1 if login ok, 0 otherwise.
  *
  * Side effects:
- *  	None.
+ *  	Stores user's login name into unameDSPtr.
  *
  *----------------------------------------------------------------------
  */
 
 static int
-Login(SOCKET sock, Tcl_DString *unameDSPtr)
+Login(Sess *sessPtr, Tcl_DString *unameDSPtr)
 {
     Tcl_HashEntry *hPtr;
     Tcl_DString uds, pds;
@@ -496,38 +522,33 @@ Login(SOCKET sock, Tcl_DString *unameDSPtr)
     ok = 0;
     Tcl_DStringInit(&uds);
     Tcl_DStringInit(&pds);
-    if (GetLine(sock, "login: ", &uds, 1) &&
-	GetLine(sock, "Password: ", &pds, fEchoPw)) {
+    if (GetLine(sessPtr->sock, "login: ", &uds, 1) &&
+	GetLine(sessPtr->sock, "Password: ", &pds, sessPtr->modPtr->echo)) {
 	user = Ns_StrTrim(uds.string);
 	pass = Ns_StrTrim(pds.string);
-    	hPtr = Tcl_FindHashEntry(&users, user);
+    	hPtr = Tcl_FindHashEntry(&sessPtr->modPtr->users, user);
 	if (hPtr != NULL) {
     	    encpass = Tcl_GetHashValue(hPtr);
-    	    if (encpass == NULL) {
-	    	if (Ns_AuthorizeUser(user, pass) == NS_OK) {
-	    	    ok = 1;
-		}
-	    } else {
-	    	Ns_Encrypt(pass, encpass, buf);
-    	    	if (STREQ(buf, encpass)) {
-		    ok = 1;
-		}
+	    Ns_Encrypt(pass, encpass, buf);
+    	    if (STREQ(buf, encpass)) {
+		ok = 1;
 	    }
 	}
     }
     if (ok) {
 	Ns_Log(Notice, "nscp: logged in: '%s'", user);
-        Tcl_DStringAppend(unameDSPtr, user, -1 );
+        Tcl_DStringAppend(unameDSPtr, user, -1);
 	sprintf(msg, "\nWelcome to %s running at %s (pid %d)\n"
 		"%s/%s (%s) for %s built on %s\nCVS Tag: %s\n",
-		server, Ns_InfoNameOfExecutable(), Ns_InfoPid(),
+		sessPtr->modPtr->server,
+		Ns_InfoNameOfExecutable(), Ns_InfoPid(),
 		Ns_InfoServerName(), Ns_InfoServerVersion(), Ns_InfoLabel(),
 		Ns_InfoPlatform(), Ns_InfoBuildDate(), Ns_InfoTag());
     } else {
 	Ns_Log(Warning, "nscp: login failed: '%s'", user ? user : "?");
 	sprintf(msg, "Access denied!\n");
     }
-    (void) send(sock, msg, strlen(msg), 0);
+    (void) send(sessPtr->sock, msg, strlen(msg), 0);
     Tcl_DStringFree(&uds);
     Tcl_DStringFree(&pds);
     return ok;
