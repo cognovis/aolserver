@@ -627,6 +627,7 @@ Ns_Main(int argc, char **argv, Ns_ServerInitProc *initProc)
     NsCreatePidFile(server);
     NsTclInit();
     NsInitMimeTypes();
+    NsInitEncodings();
     NsInitReturn(server);
     NsInitProxyRequests();
     NsInitFastpath(server);
