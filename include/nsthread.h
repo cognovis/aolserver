@@ -102,6 +102,7 @@
 #endif
 #include <windows.h>
 #include <winsock2.h>
+#include 
 #include <sys/timeb.h>
 #include <sys/types.h>
 #include <io.h>
@@ -115,6 +116,10 @@ NS_EXTERN DIR *opendir(char *pathname);
 NS_EXTERN struct dirent *readdir(DIR *dp);
 NS_EXTERN int closedir(DIR *dp);
 #define sleep(n)	(Sleep((n)*1000))
+
+#define HAVE_GETADDRINFO
+#define HAVE_GETNAMEINFO
+#include <ws2tcpip.h>
 
 #endif
 
