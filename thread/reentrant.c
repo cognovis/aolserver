@@ -291,12 +291,14 @@ static Tls *
 GetTls(void)
 {
     static Ns_Tls tls;
+    static volatile int initialized;
     Tls *tlsPtr;
 
-    if (tls == NULL) {
+    if (!initialized) {
 	Ns_MasterLock();
-	if (tls == NULL) {
+	if (!initialized) {
 	    Ns_TlsAlloc(&tls, NsFree);
+	    initialized = 1;
 	}
 	Ns_MasterUnlock();
     }

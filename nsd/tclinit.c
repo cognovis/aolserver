@@ -853,12 +853,14 @@ static TclData *
 GetData(Tcl_Interp *interp)
 {
     TclData *tdPtr;
+    static volatile int initialized = 0;
     static Ns_Tls tls;
 
-    if (tls == NULL) {
+    if (!initialized) {
 	Ns_MasterLock();
-	if (tls == NULL) {
+	if (!initialized) {
 	    Ns_TlsAlloc(&tls, FreeData);
+	    initialized = 1;
 	}
 	Ns_MasterUnlock();
     }

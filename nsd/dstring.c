@@ -472,13 +472,15 @@ Ns_DStringValue(Ns_DString *dsPtr)
 Ns_DString *
 Ns_DStringPop(void)
 {
+    static volatile int initialized = 0;
     Stack *sPtr;
     Ns_DString *dsPtr;
 
-    if (tls == NULL) {
+    if (!initialized) {
 	Ns_MasterLock();
-	if (tls == NULL) {
+	if (!initialized) {
 	    Ns_TlsAlloc(&tls, FlushDStrings);
+	    initialized = 1;
 	}
 	Ns_MasterUnlock();
     }

@@ -1139,13 +1139,15 @@ IncrCount(Pool *poolPtr, int incr)
 {
     Tcl_HashTable *tablePtr;
     Tcl_HashEntry *hPtr;
+    static volatile int initialized = 0;
     static Ns_Tls tls;
     int prev, count, new;
 
-    if (tls == NULL) {
+    if (!initialized) {
 	Ns_MasterLock();
-	if (tls == NULL) {
+	if (!initialized) {
 	    Ns_TlsAlloc(&tls, FreeCounts);
+	    initialized = 1;
 	}
 	Ns_MasterUnlock();
     }

@@ -260,13 +260,15 @@ Ns_GetConn(void)
 void
 NsGetBuf(char **bufPtr, int *sizePtr)
 {
-    char *buf;
+    static volatile int initialized = 0;
     static Ns_Tls tls;
+    char *buf;
 
-    if (tls == NULL) {
+    if (!initialized) {
 	Ns_MasterLock();
-	if (tls == NULL) {
+	if (!initialized) {
 	    Ns_TlsAlloc(&tls, ns_free);
+	    initialized = 1;
 	}
 	Ns_MasterUnlock();
     }

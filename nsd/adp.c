@@ -310,12 +310,14 @@ AdpData *
 NsAdpGetData(void)
 {
     AdpData *adPtr;
+    static volatile int initialized = 0;
     static Ns_Tls tls;
 
-    if (tls == NULL) {
+    if (!initialized) {
 	Ns_MasterLock();
-	if (tls == NULL) {
+	if (!initialized) {
 	    Ns_TlsAlloc(&tls, DelAdpData);
+	    initialized = 1;
 	}
 	Ns_MasterUnlock();
     }

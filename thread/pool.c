@@ -135,7 +135,7 @@ static void  *Block2Ptr(Block *blockPtr, int bucket, int reqsize);
  * startup.
  */
 
-static int	initialized;
+static volatile int initialized;
 static int	nbuckets;  /* Number of buckets. */
 static size_t	maxalloc;  /* Max block allocation size. */
 static Pool    *sharedPtr; /* Pool to which blocks are flushed. */
