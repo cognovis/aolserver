@@ -30,41 +30,29 @@
 # $Header$
 #
 
-#
-# You may set the following variables here, on the make command line,
-# or via shell environment variables.
-#
-# AOLSERVER:	AOLserver install directory (/usr/local/aolserver)
-# DEBUG		Build with debug symbols (default: 0, no symbols)
-# GCC		Build with gcc compiler (default: 1, use gcc)
-#
-
-
-##################################################################
-#
-# You should not need to edit anything below.
-#
-##################################################################
-
+NSBUILD=1
 include include/Makefile.global
 
-dirs   = nsthread nsd nssock nscgi nscp nslog nsperm nsext nspd
+dirs   = nsthread nsd nssock nsssl nscgi nscp nslog nsperm nsext nspd
 
 all: 
 	@for i in $(dirs); do \
 		( cd $$i && $(MAKE) all ) || exit 1; \
 	done
 
-install: all 
-	$(MKDIR)		$(AOLSERVER)/bin
-	$(MKDIR)		$(AOLSERVER)/lib
-	$(MKDIR)		$(AOLSERVER)/log
-	$(MKDIR)		$(AOLSERVER)/modules
-	$(MKDIR)		$(INSTSRVPAG)
-	$(CP) -r tcl    	$(AOLSERVER)/modules/
-	$(CP) -r include	$(AOLSERVER)/
-	$(CP) nsd/sample-config.tcl $(AOLSERVER)/
-	@for i in $(dirs); do \
+install: all
+	for i in bin lib log include modules/tcl servers/server1/pages; do \
+		$(MKDIR) $(prefix)/$$i; \
+	done
+	for i in include/*.h include/Makefile.global include/Makefile.module; do \
+		$(INSTALL_DATA) $$i $(prefix)/include/; \
+	done
+	for i in tcl/*.tcl; do \
+		$(INSTALL_DATA) $$i $(prefix)/modules/tcl/; \
+	done
+	$(INSTALL_DATA) sample-config.tcl $(prefix)/
+	$(INSTALL_DATA) install-sh $(INSTBIN)/
+	for i in $(dirs); do \
 		(cd $$i && $(MAKE) install) || exit 1; \
 	done
 
@@ -75,3 +63,6 @@ clean:
 	@for i in $(dirs); do \
 		(cd $$i && $(MAKE) clean) || exit 1; \
 	done
+
+distclean: clean
+	$(RM) config.status config.log config.cache include/Makefile.global
