@@ -706,7 +706,6 @@ NsSockClose(Sock *sockPtr, int keep)
     if (!keep) {
 	(void) (*sockPtr->drvPtr->proc)(DriverClose, sock, NULL, 0);
     }
-    sockPtr->keep = keep;
     Ns_MutexLock(&lock);
     if (firstClosePtr == NULL) {
 	trigger = 1;
@@ -1317,6 +1316,8 @@ SockRelease(Sock *sockPtr, ReleaseReasons reason)
                 errMsg, ns_inet_ntoa(sockPtr->sa.sin_addr),
                 ntohs(sockPtr->sa.sin_port) );
     }
+
+    (*sockPtr->drvPtr->proc)(DriverClose, sockPtr, NULL, 0);
 
     --nactive;
     ns_sockclose(sockPtr->sock);
