@@ -38,14 +38,6 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 
 #include "nsd.h"
 
-#ifndef WIN32
-#ifdef NO_RAND48
-#define HAVE_RANDOM 1
-#else
-#define HAVE_RAND48 1
-#endif
-#endif
-
 /*
  * Local functions defined in this file
  */
@@ -69,6 +61,7 @@ static Ns_Sema sema;	/* Semaphore that controls counting threads. */
  */
 
 static Ns_Cs lock;
+static volatile int initialized;
 
 /*
  *----------------------------------------------------------------------
@@ -144,15 +137,13 @@ NsTclRandCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 double
 Ns_DRand(void)
 {
-    static int initialized;
-
     if (!initialized) {
 	Ns_CsEnter(&lock);
 	if (!initialized) {
 	    unsigned long seed;
 	    Ns_GenSeeds(&seed, 1);
-#ifdef HAVE_RAND48
-    	    srand48(seed);
+#ifdef HAVE_DRAND48
+    	    srand48((long) seed);
 #elif defined(HAVE_RANDOM)
     	    srandom((unsigned int) seed);
 #else
@@ -162,7 +153,7 @@ Ns_DRand(void)
 	}
 	Ns_CsLeave(&lock);
     }
-#if HAVE_RAND48
+#if HAVE_DRAND48
     return drand48();
 #elif HAVE_RANDOM
     return ((double) random() / (LONG_MAX + 1.0));
