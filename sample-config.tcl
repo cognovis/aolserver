@@ -31,9 +31,11 @@ set bindir                 [file dirname [ns_info nsd]]
 set pageroot               ${homedir}/servers/${servername}/pages
 set directoryfile          index.adp,index.html,index.htm
 
+set ext .so
+
 # nsssl: Only loads if keyfile.pem and certfile.pem exist.
-#set sslmodule              nsssl.so  ;# Domestic 128-bit/1024-bit SSL.
-set sslmodule              nsssle.so ;# Exportable 40-bit/512-bit SSL.
+#set sslmodule              nsssl${ext}  ;# Domestic 128-bit/1024-bit SSL.
+set sslmodule              nsssle${ext} ;# Exportable 40-bit/512-bit SSL.
 set sslkeyfile   ${homedir}/servers/${servername}/modules/nsssl/keyfile.pem
 set sslcertfile  ${homedir}/servers/${servername}/modules/nsssl/certfile.pem
 
@@ -57,6 +59,7 @@ ns_param   debug           false
 # Thread library (nsthread) parameters
 #
 ns_section "ns/threads"
+ns_param   mutexmeter      true      ;# measure lock contention
 #ns_param   stacksize [expr 128*1024] ;# Per-thread stack size.
 
 #
@@ -91,6 +94,9 @@ ns_param   $servername     $serverdesc
 ns_section "ns/server/${servername}"
 ns_param   directoryfile   $directoryfile
 ns_param   pageroot        $pageroot
+ns_param   globalstats     true      ;# Enable built-in statistics.
+ns_param   urlstats        true      ;# Enable URL statistics.
+ns_param   maxurlstats     1000      ;# Max number of URL's to do stats on.
 ns_param   enabletclpages  false     ;# Parse *.tcl files in pageroot.
 
 
@@ -125,6 +131,13 @@ ns_param   enabledebug     false     ;# Allow Tclpro debugging with "?debug".
 
 # ADP special pages
 #ns_param   errorpage      ${pageroot}/errorpage.adp ;# ADP error page.
+
+
+#
+# ADP custom parsers -- see adp.c
+#
+ns_section "ns/server/${servername}/adp/parsers"
+ns_param   adp             ".adp"    ;# adp is the default parser.
 
 
 #
@@ -186,10 +199,10 @@ ns_section "ns/server/${servername}/module/nscgi"
 # Modules to load
 #
 ns_section "ns/server/${servername}/modules"
-ns_param   nssock          ${bindir}/nssock.so
-ns_param   nslog           ${bindir}/nslog.so
-#ns_param   nscgi           ${bindir}/nscgi.so  ;# Map the paths before using.
-#ns_param   nsperm          ${bindir}/nsperm.so ;# Edit passwd before using.
+ns_param   nssock          ${bindir}/nssock${ext}
+ns_param   nslog           ${bindir}/nslog${ext}
+#ns_param   nscgi           ${bindir}/nscgi${ext}  ;# Map the paths before using.
+#ns_param   nsperm          ${bindir}/nsperm${ext} ;# Edit passwd before using.
 
 #
 # nsssl: Only loads if sslcertfile and sslkeyfile exist (see above).
@@ -205,11 +218,11 @@ if { [file exists $sslcertfile] && [file exists $sslkeyfile] } {
 #
 if { $nscp_user != "" } {
 
-    if {![string match "127.0.0.1" $nscp_addr]} {
+    if ![string match "127.0.0.1" $nscp_addr] {
 	# Anything but 127.0.0.1 is not recommended.
 	ns_log warning "config.tcl: nscp listening on ${nscp_addr}:${nscp_port}"
     }
-    ns_param nscp ${bindir}/nscp.so
+    ns_param nscp ${bindir}/nscp${ext}
 
 } else {
     ns_log warning "config.tcl: nscp not loaded -- user/password is not set."
