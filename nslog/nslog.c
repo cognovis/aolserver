@@ -369,7 +369,7 @@ LogTrace(void *arg, Ns_Conn *conn)
      */
 
     if (logReqTime) {
-        sprintf(buf, " %d.%ld", (int)diff.sec, diff.usec);   
+        sprintf(buf, " %d.%06ld", (int)diff.sec, diff.usec);   
         Ns_DStringAppend(&ds, buf);
     }
 
