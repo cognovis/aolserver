@@ -47,6 +47,31 @@ static int debugMode;
 /*
  *----------------------------------------------------------------------
  *
+ * FatalSignalHandler --
+ *
+ * 	Ensure that we drop core on fatal signals like SIGBUS and
+ * 	SIGSEGV.
+ *
+ * Results:
+ * 	None.
+ *
+ * Side effects:
+ * 	A core file will be left wherever the server was running.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+FatalSignalHandler(int signal)
+{
+    abort();
+    exit(1);
+}
+
+
+/*
+ *----------------------------------------------------------------------
+ *
  * NsBlockSignals --
  *
  *	Block signals at startup.
@@ -84,6 +109,9 @@ NsBlockSignals(int debug)
         sigaddset(&set, SIGINT);
     }
     ns_sigmask(SIG_BLOCK, &set, NULL);
+
+    ns_signal(SIGBUS, FatalSignalHandler); 
+    ns_signal(SIGSEGV, FatalSignalHandler); 
 }
 
 
