@@ -703,6 +703,7 @@ ConnRun(Conn *connPtr)
 
     connPtr->reqPtr = NsGetRequest(connPtr->sockPtr);
     if (connPtr->reqPtr == NULL) {
+        Ns_ConnClose(conn);
 	return;
     }
     connPtr->contentLength = connPtr->reqPtr->length;
