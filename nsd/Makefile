@@ -56,7 +56,7 @@ include ../include/Makefile.build
 stamp.o: $(LOBJS)
 	$(CC) -c -o stamp.o stamp.c
 
-tclstub8x.o: tclnsshare.cpp tclinvoke.cpp tclstubs.cpp
+tclstub8x.o: tclnsshare.cpp tclstubs.cpp
 
 install-init:
 	$(RM) $(INSTBIN)/$(INIT)
