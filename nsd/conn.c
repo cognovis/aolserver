@@ -1305,7 +1305,7 @@ NsTclParseQueryCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
     Ns_Set *set;
 
     if (argc != 2) {
-	Tcl_AppendResult(interp, argv[0], ": wrong number args: should be \"",
+	Tcl_AppendResult(interp, argv[0], ": wrong # of args: should be \"",
 	    argv[0], " querystring\"", (char *) NULL);
 	return TCL_ERROR;
     }
