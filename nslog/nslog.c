@@ -87,10 +87,6 @@ static Ns_TclInterpInitProc AddCmds;
  *
  */
 
-typedef struct Buf {
-    Ns_Time s_time;
-} Buf;
-
 static Ns_Tls tls;
 static Ns_FilterProc Filter;
 static Ns_Callback FreeBuf;
@@ -268,7 +264,7 @@ LogTrace(void *arg, Ns_Conn *conn)
     char           buf[100];
     Log		  *logPtr = arg;
     Ns_Time        now, diff;
-    Buf           *bufPtr; 
+    Ns_Time       *timePtr = Ns_TlsGet(&tls); 
 
     if (logPtr->flags & LOG_REQTIME) {
 
@@ -276,9 +272,9 @@ LogTrace(void *arg, Ns_Conn *conn)
          * Compute the request's elapsed time.
          */ 
 
-        if ((bufPtr = Ns_TlsGet(&tls)) != NULL) {
+        if (timePtr != NULL) {
             Ns_GetTime(&now);
-            Ns_DiffTime(&now, &bufPtr->s_time, &diff);
+            Ns_DiffTime(&now, timePtr, &diff);
             logReqTime = 1;
         }
     }
@@ -801,17 +797,17 @@ LogConfigExtHeaders(Log *logPtr, char *path)
 static int
 Filter(void *context, Ns_Conn *conn, int why)
 {
-    Buf *bufPtr;
     Ns_Time now;
+    Ns_Time *timePtr = Ns_TlsGet(&tls);
 
     Ns_GetTime(&now);
 
-    if ((bufPtr = Ns_TlsGet(&tls)) == NULL) {
-        bufPtr = ns_malloc(sizeof(Buf));
-        Ns_TlsSet(&tls, bufPtr);
+    if (timePtr == NULL) {
+        timePtr = ns_malloc(sizeof(Ns_Time));
+        Ns_TlsSet(&tls, timePtr);
     }
-
-    bufPtr->s_time = now;
+ 
+    Ns_GetTime(timePtr);
 
     return NS_OK;
 }
@@ -827,7 +823,7 @@ Filter(void *context, Ns_Conn *conn, int why)
  *      None.
  *
  * Side effects:
- *      Allocated buffer (from the registered filter) is freed.
+ *      Allocated Ns_Time struct (from the registered filter) is freed.
  *
  *----------------------------------------------------------------------
  */
@@ -835,7 +831,7 @@ Filter(void *context, Ns_Conn *conn, int why)
 static void
 FreeBuf(void *arg)
 {
-    Buf *bufPtr = arg;
+    Ns_Time *timePtr = arg;
 
-    ns_free(bufPtr);
+    ns_free(timePtr);
 }
