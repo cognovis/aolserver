@@ -2481,14 +2481,6 @@ LocalProxy(NsExtConn * nsConn)
 
     status = NS_ERROR;
 
-    /*
-     * Set CloseOnExec to avoid stuck-open connections.
-     */
-    Ns_CloseOnExec(in[0]);
-    Ns_CloseOnExec(in[1]);
-    Ns_CloseOnExec(out[0]);
-    Ns_CloseOnExec(out[1]);
-
     if (ns_sockpair(in) < 0) {
         Ns_Log(Error, "nsext: failed to create input socket pipes");
     } else {
@@ -2497,6 +2489,13 @@ LocalProxy(NsExtConn * nsConn)
 	    ns_sockclose(in[1]);
             Ns_Log(Error, "nsext: failed to create output socket pipes");
         } else {
+            /*
+             * Set CloseOnExec to avoid stuck-open connections.
+            */
+            Ns_CloseOnExec(in[0]);
+            Ns_CloseOnExec(in[1]);
+            Ns_CloseOnExec(out[0]);
+            Ns_CloseOnExec(out[1]);
             argv[0] = nsConn->ctx->path;
             argv[1] = NULL;
             pid = Ns_ExecArgv(nsConn->ctx->path, NULL, out[0], in[1], argv,
