@@ -53,13 +53,14 @@ typedef struct Arg {
 static Ns_ThreadProc EvalThread;
 static Ns_SockProc AcceptProc;
 static Tcl_CmdProc ExitCmd;
-static int Login(SOCKET sock);
+static int Login(SOCKET sock, Tcl_DString *unameDS);
 static int GetLine(SOCKET sock, char *prompt, Tcl_DString *dsPtr, int echo);
 static char *server;
 static Tcl_HashTable users;
 static char *addr;
 static int port;
 static int fEchoPw;
+static int cpCommandLogging;
 static Ns_ArgProc ArgProc;
 
 /*
@@ -127,6 +128,11 @@ Ns_ModuleInit(char *s, char *module)
     if (!Ns_ConfigGetBool(path, "echopassword", &fEchoPw)) {
     	fEchoPw = 1;
     }
+
+    if (!Ns_ConfigGetBool(path, "cpcmdlogging", &cpCommandLogging)) {
+      cpCommandLogging = 1; /* Default to on */
+    }
+
     lsock = Ns_SockListen(addr, port);
     if (lsock == INVALID_SOCKET) {
 	Ns_Log(Error, "nscp: could not listen on %s:%d", addr, port);
@@ -281,6 +287,7 @@ EvalThread(void *arg)
 {
     Tcl_Interp *interp;
     Tcl_DString ds;
+    Tcl_DString unameDS;
     char buf[64], *res;
     int n, len, ncmd, stop;
     Arg *aPtr = (Arg *) arg;
@@ -290,12 +297,19 @@ EvalThread(void *arg)
      */
      
     Tcl_DStringInit(&ds);
+    Tcl_DStringInit(&unameDS);
     sprintf(buf, "-nscp:%d-", aPtr->id);
     Ns_ThreadSetName(buf);
     Ns_Log(Notice, "nscp: connect: %s", ns_inet_ntoa(aPtr->sa.sin_addr));
-    if (!Login(aPtr->sock)) {
+    if (!Login(aPtr->sock, &unameDS)) {
 	goto done;
     }
+
+    /*
+     * Now, update the thread name to include username info.
+     */
+    sprintf(buf, "-nscp:%s:%d-", Tcl_DStringValue(&unameDS), aPtr->id);
+    Ns_ThreadSetName(buf);
 
     /*
      * Loop until the remote shuts down, evaluating complete
@@ -332,6 +346,11 @@ retry:
 	if (STREQ(ds.string, "")) {
 	    goto retry; /* Empty command - try again. */
 	}
+
+        if( cpCommandLogging ) {
+          Ns_Log(Notice, " %d> %s", ncmd, ds.string );
+        }
+
 	if (Tcl_Eval(interp, ds.string) != TCL_OK) {
 	    Ns_TclLogError(interp);
 	}
@@ -343,9 +362,14 @@ retry:
 	    len -= n;
 	    res += n;
 	}
+
+        if( cpCommandLogging ) {
+          Ns_Log(Notice, " %d> Command Completed.", ncmd );
+        }
     }
 done:
     Tcl_DStringFree(&ds);
+    Tcl_DStringFree(&unameDS);
     Ns_TclDeAllocateInterp(interp);
     Ns_Log(Notice, "nscp: disconnect: %s", ns_inet_ntoa(aPtr->sa.sin_addr));
     ns_sockclose(aPtr->sock);
@@ -461,7 +485,7 @@ GetLine(SOCKET sock, char *prompt, Tcl_DString *dsPtr, int echo)
  */
 
 static int
-Login(SOCKET sock)
+Login(SOCKET sock, Tcl_DString *unameDSPtr)
 {
     Tcl_HashEntry *hPtr;
     Tcl_DString uds, pds;
@@ -493,6 +517,7 @@ Login(SOCKET sock)
     }
     if (ok) {
 	Ns_Log(Notice, "nscp: logged in: '%s'", user);
+        Tcl_DStringAppend(unameDSPtr, user, -1 );
 	sprintf(msg, "\nWelcome to %s running at %s (pid %d)\n"
 		"%s/%s (%s) for %s built on %s\nCVS Tag: %s\n",
 		server, Ns_InfoNameOfExecutable(), Ns_InfoPid(),
