@@ -929,8 +929,10 @@ NsTclInfoCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 	Ns_ThreadList(&ds, NULL);
 	Tcl_DStringResult(interp, &ds);
     } else if (STREQ(argv[1], "pools")) {
+#ifndef _WIN32
 	Tcl_GetMemoryInfo(&ds);
 	Tcl_DStringResult(interp, &ds);
+#endif
     } else if (STREQ(argv[1], "log")) {
         elog = Ns_InfoErrorLog();
 	Tcl_SetResult(interp, elog == NULL ? "STDOUT" : elog, TCL_STATIC);
