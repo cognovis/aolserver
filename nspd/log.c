@@ -206,9 +206,9 @@ Ns_PdLog(Ns_PdLogMsgType errtype, char *format,...)
             char msgbuf[4096];
 
             va_start(ap, format);
-            vsprintf(msgbuf, format, ap);
+            vsnprintf(msgbuf, sizeof (msgbuf), format, ap);
             va_end(ap);
-            syslog(priority, msgbuf);
+            syslog(priority, "%s", msgbuf);
         }
     }
 }
