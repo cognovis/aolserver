@@ -202,6 +202,12 @@ Ns_RegisterCleanup(Ns_TraceProc *proc, void *arg)
     return (void *) tPtr;
 }
 
+void *
+Ns_RegisterConnCleanup(char *ignored, Ns_TraceProc *proc, void *arg)
+{
+    return Ns_RegisterCleanup(proc, arg);
+}
+
 
 /*
  *----------------------------------------------------------------------

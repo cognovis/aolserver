@@ -495,6 +495,12 @@ Ns_SetConnLocationProc(Ns_LocationProc *procPtr)
     locationPtr = procPtr;
 }
 
+void
+Ns_SetLocationProc(char *ignored, Ns_LocationProc *procPtr)
+{
+    Ns_SetConnLocationProc(procPtr);
+}
+
 
 /*
  *----------------------------------------------------------------------
