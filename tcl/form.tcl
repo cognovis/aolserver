@@ -93,13 +93,18 @@ proc ns_querygetall {key {def_result ""}} {
         for {set i 0} {$i < $size} {incr i} {
             set k [ns_set key $form $i]
             if {[string tolower $k] == $lkey} {
-                lappend result [ns_set value $form $i]
+                if {[string length [ns_set value $form $i]]} {
+                    lappend result [ns_set value $form $i]
+                }
             }
-         }
-     } else {
-         set result $def_result
-     }
-     return $result
+        }
+        if {[string length $result] == 0} {
+            set result $def_result
+        }
+    } else {
+        set result $def_result
+    }
+    return $result
 }
 
 
