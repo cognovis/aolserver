@@ -719,8 +719,9 @@ NsTclShareCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 			     argv[0], " -init script varName\"", NULL);
 	    return TCL_ERROR;
         }
-        if (NsTclShareVar(interp, argv[3]) != TCL_OK ||
-    	    InitShare(interp, argv[3], argv[2]) != TCL_OK) {
+        NsTclShareVar(interp, argv[3]);
+	Tcl_ResetResult(interp);
+	if (InitShare(interp, argv[3], argv[2]) != TCL_OK) {
 	    return TCL_ERROR;
 	}
     } else {
