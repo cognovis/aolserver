@@ -36,6 +36,11 @@ MODINST	 =  cpfiles
 
 include ../include/Makefile.build
 
+# Solaris 2.7+
+ifneq (,$(findstring SunOS,$(uname)))
+    LIBS+=-lresolv
+endif
+
 moddir	 = nsperm
 moddat	 = $(INSTSRVMOD)/$(moddir)
 modtcl	 = $(INSTTCL)/$(moddir)
