@@ -87,10 +87,12 @@ INSTALL	+= install-pgm
 CLEAN	+= clean-pgm
 endif
 
+AOLSERVER = @prefix@
+
 ifdef NSBUILD
     include ../include/Makefile.global
 else
-    include @prefix@/include/Makefile.global
+    include $(AOLSERVER)/include/Makefile.global
 endif
 
 all build: $(BUILD)
