@@ -548,6 +548,7 @@ Ns_Main(int argc, char **argv, Ns_ServerInitProc *initProc)
     }
 
     contservice:
+    server = nsconf.server;
 
 #endif
 

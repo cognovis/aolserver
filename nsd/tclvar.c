@@ -219,7 +219,7 @@ NsTclVIncrCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
     }
     UnlockArray(arrayPtr);
     if (hPtr == NULL) {
-	Tcl_AppendResult(interp, "no such key: ", argv[2]);
+	Tcl_AppendResult(interp, "no such key: ", argv[2], NULL);
     } else if (result == TCL_OK) {
     	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     }
