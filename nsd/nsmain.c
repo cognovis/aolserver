@@ -194,7 +194,7 @@ Ns_Main(int argc, char **argv, Ns_ServerInitProc *initProc)
 	    UsageError(NULL);
 	    break;
 	case 'q':
-	    nsconf.quiet = NS_TRUE;
+	    nsconf.quiet = NS_FALSE;
 	    break;
 	case 'f':
 	case 'i':
@@ -1369,7 +1369,7 @@ UsageError(char *msg)
 	    "  -i  inittab mode\n"
 	    "  -f  foreground mode\n"
 	    "  -z  zippy memory allocator\n"
-	    "  -q  quieter startup\n"
+	    "  -q  non-quiet startup\n"
 #ifdef WIN32
 	    "  -I  Install win32 service\n"
 	    "  -R  Remove win32 service\n"
