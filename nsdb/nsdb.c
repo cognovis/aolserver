@@ -27,44 +27,20 @@
  * version of this file under either the License or the GPL.
  */
 
-/* 
+/*
  * nsdb.c --
  *
- *	Database module entry point.
+ *	Stub AOLserver 4.x nsdb module for AOLserver 3.x.
  */
 
 static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 
-#include "db.h"
+#include "ns.h"
 
 int Ns_ModuleVersion = 1;
-
-
-/*
- *----------------------------------------------------------------------
- *
- * Ns_ModuleInit --
- *
- *	Module initialization point.
- *
- * Results:
- *	NS_OK.
- *
- * Side effects:
- *	May load database drivers and configure pools.
- *
- *----------------------------------------------------------------------
- */
 
 int
 Ns_ModuleInit(char *server, char *module)
 {
-    static int once;
-
-    if (!once) {
-	NsDbInitPools();
-	once = 1;
-    }
-    NsDbInitServer(server);
-    return Ns_TclInitInterps(server, NsDbAddCmds, server);
+    return NS_OK;
 }
