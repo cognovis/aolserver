@@ -195,6 +195,9 @@ Ns_ConnClose(Ns_Conn *conn)
 	    Ns_GetTime(&connPtr->tclose);
 	}
 	connPtr->flags |= NS_CONN_CLOSED;
+	if (connPtr->interp != NULL) {
+	    NsTclRunAtClose(connPtr->interp);
+	}
     }
     return NS_OK;
 }
