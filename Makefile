@@ -33,14 +33,16 @@
 NSBUILD=1
 include include/Makefile.global
 
-dirs   = nsthread nsd nssock nsssl nscgi nscp nslog nsperm nsext nspd
+dirs   = nsthread nsd nssock nsssl nscgi nscp nslog nsperm nsdb nsext nspd
 
 all: 
 	@for i in $(dirs); do \
 		( cd $$i && $(MAKE) all ) || exit 1; \
 	done
 
-install: all
+install: install-binaries install-doc
+
+install-binaries: all
 	for i in bin lib log include modules/tcl servers/server1/pages; do \
 		$(MKDIR) $(AOLSERVER)/$$i; \
 	done
@@ -50,7 +52,7 @@ install: all
 	for i in tcl/*.tcl; do \
 		$(INSTALL_DATA) $$i $(AOLSERVER)/modules/tcl/; \
 	done
-	$(INSTALL_DATA) nsd/sample-config.tcl $(AOLSERVER)/
+	$(INSTALL_DATA) sample-config.tcl $(AOLSERVER)/
 	$(INSTALL_SH) install-sh $(INSTBIN)/
 	for i in $(dirs); do \
 		(cd $$i && $(MAKE) install) || exit 1; \
@@ -59,6 +61,9 @@ install: all
 install-tests:
 	$(CP) -r tests $(INSTSRVPAG)
 
+install-doc:
+	cd doc && /bin/sh ./install-doc $(AOLSERVER)
+
 clean:
 	@for i in $(dirs); do \
 		(cd $$i && $(MAKE) clean) || exit 1; \
@@ -66,3 +71,5 @@ clean:
 
 distclean: clean
 	$(RM) config.status config.log config.cache include/Makefile.global
+
+.PHONY: all install install-binaries install-doc install-tests clean distclean
