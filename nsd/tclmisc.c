@@ -87,6 +87,8 @@ static int JpegSize(Tcl_Channel chan, int *wPtr, int *hPtr);
  * Static variables defined in this file
  */
 
+static Ns_ThreadArgProc ThreadArgProc;
+
 
 /*
  *----------------------------------------------------------------------
@@ -156,8 +158,7 @@ NsIsIdConn(char *connId)
  *	1 if semi, 0 if space. 
  *
  * Side effects:
- *	Behavior is undefined if string ends before either space or 
- *	semi. 
+ *      Undefined behavior if string does not end in null
  *
  *----------------------------------------------------------------------
  */
@@ -165,7 +166,16 @@ NsIsIdConn(char *connId)
 static int
 WordEndsInSemi(char *ip)
 {
-    while((*ip != ' ') && (*ip != ';')) {
+    if (ip == NULL) {
+        return 0;
+    }
+    /* advance past the first '&' so we can check for a second 
+       (i.e. to handle "ben&jerry&nbsp;")
+    */
+    if (*ip == '&') {
+        ip++;
+    }
+    while((*ip != '\0') && (*ip != ' ') && (*ip != ';') && (*ip != '&')) {
         ip++;
     }
     if (*ip == ';') {
@@ -926,7 +936,7 @@ NsTclInfoCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 	Ns_MutexList(&ds);
 	Tcl_DStringResult(interp, &ds);
     } else if (STREQ(argv[1], "threads")) {
-	Ns_ThreadList(&ds, NULL);
+	Ns_ThreadList(&ds, ThreadArgProc);
 	Tcl_DStringResult(interp, &ds);
     } else if (STREQ(argv[1], "pools")) {
 #ifndef _WIN32
@@ -1729,4 +1739,10 @@ JpegSize(Tcl_Channel chan, int *wPtr, int *hPtr)
 	}
     }
     return TCL_ERROR;
+}
+
+static void      
+ThreadArgProc(Tcl_DString *dsPtr, void *proc, void *arg)
+{
+    Ns_GetProcInfo(dsPtr, proc, arg);
 }
