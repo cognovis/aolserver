@@ -87,6 +87,8 @@ static int JpegSize(Tcl_Channel chan, int *wPtr, int *hPtr);
  * Static variables defined in this file
  */
 
+static Ns_ThreadArgProc ThreadArgProc;
+
 
 /*
  *----------------------------------------------------------------------
@@ -934,7 +936,7 @@ NsTclInfoCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 	Ns_MutexList(&ds);
 	Tcl_DStringResult(interp, &ds);
     } else if (STREQ(argv[1], "threads")) {
-	Ns_ThreadList(&ds, NULL);
+	Ns_ThreadList(&ds, ThreadArgProc);
 	Tcl_DStringResult(interp, &ds);
     } else if (STREQ(argv[1], "pools")) {
 #ifndef _WIN32
@@ -1737,4 +1739,10 @@ JpegSize(Tcl_Channel chan, int *wPtr, int *hPtr)
 	}
     }
     return TCL_ERROR;
+}
+
+static void      
+ThreadArgProc(Tcl_DString *dsPtr, void *proc, void *arg)
+{
+    Ns_GetProcInfo(dsPtr, proc, arg);
 }
