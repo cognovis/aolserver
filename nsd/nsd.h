@@ -77,6 +77,20 @@
 #include <sys/stat.h>
 #include <ctype.h>
 
+#ifdef HAVE_POLL
+  #include <poll.h>
+#else
+  #define POLLIN 1
+  #define POLLOUT 2
+  #define POLLPRI 3
+  struct pollfd {
+    int fd;
+    short events;
+    short revents;
+  };
+  extern int poll(struct pollfd *, unsigned long, int);
+#endif
+
 #ifndef F_CLOEXEC
 #define F_CLOEXEC 1
 #endif
@@ -98,8 +112,8 @@
  */
 
 #define NSD_NAME             "AOLserver"
-#define NSD_VERSION	     "3.5.0"
-#define NSD_LABEL            "aolserver_v35_b0"
+#define NSD_VERSION	     "3.5.1"
+#define NSD_LABEL            "aolserver_v35_b1"
 #define NSD_TAG              "$Name$"
 #define NS_CONFIG_PARAMETERS "ns/parameters"
 #define NS_CONFIG_SERVERS    "ns/servers"
@@ -434,7 +448,7 @@ extern void NsGetScheduled(Tcl_DString *dsPtr);
 
 extern char *NsConfigRead(char *file);
 extern void  NsConfigFree(char *buf);
-extern void  NsConfigEval(char *script);
+extern void  NsConfigEval(char *script, int argc, char **argv, int optind);
 extern void  NsConfigParse(char *file, char *config);
 extern void  NsConfigParseAux();  /* AuxConfigDir */
 extern void  NsConfInit(char *server);
@@ -566,6 +580,7 @@ extern int	   NsTclShareVar(Tcl_Interp *interp, char *varName);
 extern TclCmdInfo *NsTclGetCmdInfo(Tcl_Interp *interp, char *name);
 extern void 	   NsTclCreateCommand(Tcl_Interp *interp, TclCmdInfo *cmdPtr);
 extern void	   NsTclRunInits(void);
+extern void	   NsTclRunAtClose(Tcl_Interp *interp);
 
 /*
  * Callback routines.
