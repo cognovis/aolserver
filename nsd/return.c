@@ -536,6 +536,7 @@ Ns_ConnPrintfHeader(Ns_Conn *conn, char *fmt,...)
 #else
         vsnprintf(buf, sizeof(buf)-1, fmt, ap);
 #endif
+	buf[sizeof(buf)-1] = '\0';
         va_end(ap);
         result = Ns_ConnPuts(conn, buf);
     } else {
