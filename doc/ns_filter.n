@@ -37,9 +37,11 @@
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-ns_register_filter, ns_register_trace \- commands
+ns_register_filter, ns_register_proc, ns_register_trace \- Register a filter, proc or trace callback
 .SH SYNOPSIS
 \fBns_register_filter \fIoption \fR?\fIarg arg ...\fR?
+.sp
+\fBns_register_proc \fIoption \fR?\fIarg arg ...\fR?
 .sp
 \fBns_register_trace \fIoption \fR?\fIarg arg ...\fR?
 .BE

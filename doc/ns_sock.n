@@ -36,7 +36,7 @@
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-ns_sockaccept, ns_sockblocking, ns_sockcallback, ns_sockcheck, ns_socketpair, ns_socklisten, ns_socklistencallback, ns_socknonblocking, ns_socknread, ns_sockopen, ns_sockselect \- Socket commands
+ns_sockaccept, ns_sockblocking, ns_sockcallback, ns_sockcheck, ns_socketpair, ns_socklisten, ns_socklistencallback, ns_socknonblocking, ns_socknread, ns_sockopen, ns_sockselect \- Network socket commands
 .SH SYNOPSIS
 \fBns_sockaccept \fIsockid\fR
 .sp
