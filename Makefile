@@ -50,7 +50,7 @@ install: all
 	for i in tcl/*.tcl; do \
 		$(INSTALL_DATA) $$i $(prefix)/modules/tcl/; \
 	done
-	$(INSTALL_DATA) sample-config.tcl $(prefix)/
+	$(INSTALL_DATA) nsd/sample-config.tcl $(prefix)/
 	$(INSTALL_DATA) install-sh $(INSTBIN)/
 	for i in $(dirs); do \
 		(cd $$i && $(MAKE) install) || exit 1; \
