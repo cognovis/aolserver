@@ -63,16 +63,30 @@ static const char *RCSID = "@(#): $Header$, compiled: " __DATE__ " " __TIME__;
 
 #include <ctype.h>
 
-static int nsX509Initialized = NS_FALSE;
-static B_ALGORITHM_OBJ asciiDecoder = (B_ALGORITHM_OBJ) NULL_PTR;
-static Ns_Cs nsAsciiDecoderCS;
+static int
+nsX509Initialized = NS_FALSE;
+
+static B_ALGORITHM_OBJ
+asciiDecoder = (B_ALGORITHM_OBJ) NULL_PTR;
+
+static Ns_CriticalSection
+nsAsciiDecoderCS;
+
 
 /*
  * Private function prototypes.
  */
+static void
+X509Cleanup(void *ignore);
 
-static void X509Cleanup(void *ignore);
-static int X509Initialize(void);
+static int
+X509Initialize(void);
+
+
+/*
+ * Exported functions
+ */
+
 
 
 /* 
@@ -308,7 +322,7 @@ GetBerFromPEM(char *filename, char *section, int *length)
     if (X509Initialize() != NS_OK) {
         return NULL;
     }
-    Ns_CsEnter(&nsAsciiDecoderCS);
+    Ns_EnterCriticalSection(&nsAsciiDecoderCS);
 
     chunk = NULL;
     do {
@@ -406,7 +420,7 @@ GetBerFromPEM(char *filename, char *section, int *length)
         *length += updateLength;
     } while (0);
     
-    Ns_CsLeave(&nsAsciiDecoderCS);
+    Ns_LeaveCriticalSection(&nsAsciiDecoderCS);
     
     if (fp != NULL) {
         fclose(fp);
@@ -1234,6 +1248,9 @@ X509Initialize(void)
     if (nsX509Initialized != NS_TRUE) {
         int             status = NS_ERROR;
 
+        if (Ns_InitializeCriticalSection(&nsAsciiDecoderCS) != NS_OK) {
+            return NS_ERROR;
+        }
         do {
             if (B_CreateAlgorithmObject(&asciiDecoder) != 0) {
                 break;
@@ -1283,5 +1300,5 @@ X509Cleanup(void *ignore)
 {
     B_DestroyAlgorithmObject(&asciiDecoder);
     nsX509Initialized = NS_FALSE;
-    Ns_CsDestroy(&nsAsciiDecoderCS);
+    Ns_DestroyCriticalSection(&nsAsciiDecoderCS);
 }
