@@ -44,5 +44,4 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 #endif
 
 #include "tclstubs.cpp"
-#include "tclinvoke.cpp"
 #include "tclnsshare.cpp"
