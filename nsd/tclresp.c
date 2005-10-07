@@ -642,6 +642,41 @@ NsTclReturnRedirectObjCmd(ClientData arg, Tcl_Interp *interp, int objc, Tcl_Obj 
 /*
  *----------------------------------------------------------------------
  *
+ * NsTclInternalRedirectObjCmd --
+ *
+ *	Implements ns_internalredirect as obj command. 
+ *
+ * Results:
+ *	Tcl result. 
+ *
+ * Side effects:
+ *	See docs. 
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+NsTclInternalRedirectObjCmd(ClientData arg, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
+{
+    Ns_Conn *conn;
+
+    if (objc != 2 && objc != 3) {
+        Tcl_WrongNumArgs(interp, 1, objv, "?connid? location");
+        return TCL_ERROR;
+    }
+    if (objc == 3 && !CheckId(interp, Tcl_GetString(objv[1]))) {
+	return TCL_ERROR;
+    }
+    if (GetConn(arg, interp, &conn) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    return Result(interp, Ns_ConnRedirect(conn, Tcl_GetString(objv[objc-1])));
+}
+
+
+/*
+ *----------------------------------------------------------------------
+ *
  * NsTclWriteObjCmd --
  *
  *	Implements ns_write as obj command.

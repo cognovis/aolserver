@@ -38,8 +38,6 @@ static const char *RCSID = "@(#) $Header$, compiled: " __DATE__ " " __TIME__;
 
 #include "nsd.h"
 
-#define MAX_RECURSION 3       /* Max return direct recursion limit. */
-
 #define HTTP11_HDR_TE "Transfer-Encoding"
 #define HTTP11_TE_CHUNKED "chunked"
 
@@ -1320,13 +1318,8 @@ ReturnRedirect(Ns_Conn *conn, int status, int *resultPtr)
     servPtr = connPtr->servPtr;
     hPtr = Tcl_FindHashEntry(&servPtr->request.redirect, (char *) status);
     if (hPtr != NULL) {
-	if (++connPtr->recursionCount > MAX_RECURSION) {
-	    Ns_Log(Error, "return: failed to redirect '%d': "
-		   "exceeded recursion limit of %d", status, MAX_RECURSION);
-	} else {
-    	    *resultPtr = Ns_ConnRedirect(conn, Tcl_GetHashValue(hPtr));
-	    return 1;
-	}
+        *resultPtr = Ns_ConnRedirect(conn, Tcl_GetHashValue(hPtr));
+        return 1;
     }
     return 0;
 }

@@ -86,6 +86,7 @@ extern Tcl_ObjCmdProc
     NsTclHttpObjCmd,
     NsTclHttpTimeObjCmd,
     NsTclInfoObjCmd,
+    NsTclInternalRedirectObjCmd,
     NsTclJobObjCmd,
     NsTclJpegSizeObjCmd,
     NsTclKillObjCmd,
@@ -443,6 +444,7 @@ static Cmd servCmds[] = {
     {"ns_returnforbidden", NULL, NsTclReturnForbiddenObjCmd},
     {"ns_returnunauthorized", NULL, NsTclReturnUnauthorizedObjCmd},
     {"ns_returnnotfound", NULL, NsTclReturnNotFoundObjCmd},
+    {"ns_internalredirect", NULL, NsTclInternalRedirectObjCmd},
 
     /*
      * tclfile.c
