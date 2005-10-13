@@ -386,8 +386,7 @@ GetAddr(Ns_DString *dsPtr, char *host)
     if (result != 0) { 
 	LogError("gethostbyname_r", h_errnop);
     } else {
-        ptr = (struct in_addr *) he.h_addr_list[i];
-        while (ptr != NULL) {
+        while ((ptr = (struct in_addr *) he.h_addr_list[i++]) != NULL) {
             ia.s_addr = ptr->s_addr;
             Tcl_DStringAppendElement(dsPtr, ns_inet_ntoa(ia));
             status = NS_TRUE;
@@ -420,8 +419,7 @@ GetAddr(Ns_DString *dsPtr, char *host)
     if (he == NULL) {
 	LogError("gethostbyname", h_errno);
     } else {
-        ptr = (struct in_addr *) he.h_addr_list[i];
-        while (ptr != NULL) {
+        while ((ptr = (struct in_addr *) he.h_addr_list[i++])  != NULL) {
             ia.s_addr = ptr->s_addr;
             Tcl_DStringAppendElement(dsPtr, ns_inet_ntoa(ia));
             status = NS_TRUE;
