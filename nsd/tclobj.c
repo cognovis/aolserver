@@ -85,9 +85,12 @@ NsTclInitTimeType()
     if (sizeof(obj.internalRep) < sizeof(Ns_Time)) {
     	Tcl_Panic("NsTclInitObjs: sizeof(obj.internalRep) < sizeof(Ns_Time)");
     }
+    /* As Dossy pointed out c. 2005-08-01, this check is bogus on
+       x86-64, comment it out:
     if (sizeof(int) < sizeof(long)) {
     	Tcl_Panic("NsTclInitObjs: sizeof(int) < sizeof(long)");
     }
+    */
     intTypePtr = Tcl_GetObjType("int");
     if (intTypePtr == NULL) {
     	Tcl_Panic("NsTclInitObjs: no int type");
