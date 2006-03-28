@@ -130,7 +130,7 @@ Ns_InfoErrorLog(void)
  *
  * Ns_LogRoll --
  *
- *	Signal handler for SIG_HUP which will roll the files. Also a 
+ *	Signal handler for SIGHUP which will roll the files.  Also a 
  *	tasty snack from Stuckey's. 
  *
  * Results:
@@ -145,16 +145,23 @@ Ns_InfoErrorLog(void)
 int
 Ns_LogRoll(void)
 {
+    int status = NS_OK;
+
     if (nsconf.log.file != NULL) {
+#ifdef _WIN32
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+#endif
         if (access(nsconf.log.file, F_OK) == 0) {
             Ns_RollFile(nsconf.log.file, nsconf.log.maxback);
         }
         Ns_Log(Notice, "log: re-opening log file '%s'", nsconf.log.file);
         if (LogReOpen() != NS_OK) {
-	    return NS_ERROR;
+            status = NS_ERROR;
 	}
     }
-    return NS_OK;
+
+    return status;
 }
 
 
@@ -642,7 +649,7 @@ LogFlush(Cache *cachePtr)
 
     Ns_MutexLock(&lock);
     if (flushProcPtr == NULL) {
-	(void) write(2, dsPtr->string, (size_t)dsPtr->length);
+        (void) write(STDERR_FILENO, dsPtr->string, (size_t)dsPtr->length);
     } else {
 	(*flushProcPtr)(dsPtr->string, (size_t)dsPtr->length);
     }
