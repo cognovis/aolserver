@@ -840,7 +840,7 @@ NsTclConnObjCmd(ClientData arg, Tcl_Interp *interp, int objc, Tcl_Obj **objv)
     }
 
     result  = Tcl_GetObjResult(interp);
-    connPtr = (Conn *) conn = itPtr->conn;
+    connPtr = conn = (Conn *) itPtr->conn;
 
     /*
      * Only the "isconnected" option operates without a conn.
