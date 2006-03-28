@@ -71,7 +71,11 @@ FatalSignalHandler(int signal)
      * As of glibc 2.3 with NPTL, this should be a no-op.
      */
 
-    pthread_kill_other_threads_np();
+    /* As Dossy said c. 2005-06-27, this next line is bogus on any
+       machine using NPTL rather than the old LinuxThreads.  TODO:
+       Correct fix would handle both, but NPTL is now much more
+       common: */
+    /* pthread_kill_other_threads_np(); */
 #endif
 
     Ns_Log(Fatal, "received fatal signal %d", signal);
