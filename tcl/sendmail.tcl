@@ -11,7 +11,7 @@
 #
 # The Original Code is AOLserver Code and related documentation
 # distributed by AOL.
-# 
+#
 # The Initial Developer of the Original Code is America Online,
 # Inc. Portions created by AOL are Copyright (C) 1999 America Online,
 # Inc. All Rights Reserved.
@@ -39,7 +39,7 @@
 
 proc _ns_smtp_send {wfp string timeout} {
     if {[lindex [ns_sockselect -timeout $timeout {} $wfp {}] 1] == ""} {
-	error "Timeout writing to SMTP host"
+        error "Timeout writing to SMTP host"
     }
     puts $wfp $string\r
     flush $wfp
@@ -48,17 +48,17 @@ proc _ns_smtp_send {wfp string timeout} {
 
 proc _ns_smtp_recv {rfp check timeout} {
     while {1} {
-	if {[lindex [ns_sockselect -timeout $timeout $rfp {} {}] 0] == ""} {
-	    error "Timeout reading from SMTP host"
-	}
-	set line [gets $rfp]
-	set code [string range $line 0 2]
-	if {![string match $check $code]} {
-	    error "Expected a $check status line; got:\n$line"
-	}
-	if {![string match "-" [string range $line 3 3]]} {
-	    break;
-	}
+        if {[lindex [ns_sockselect -timeout $timeout $rfp {} {}] 0] == ""} {
+            error "Timeout reading from SMTP host"
+        }
+        set line [gets $rfp]
+        set code [string range $line 0 2]
+        if {![string match $check $code]} {
+            error "Expected a $check status line; got:\n$line"
+        }
+        if {![string match "-" [string range $line 3 3]]} {
+            break;
+        }
     }
 }
 
@@ -74,112 +74,112 @@ proc ns_sendmail { to from subject body {extraheaders {}} {bcc {}} } {
     regsub -all "\r" $to "" to
     regsub -all "\n" $bcc "" bcc
     regsub -all "\r" $bcc "" bcc
-    
+
     ## Split to into a proper list
     set tolist_in [split $to ","]
     set bcclist_in [split $bcc ","]
-    
+
     ## Get smtp server into, if none then use localhost
     set smtp [ns_config ns/parameters smtphost]
     if {[string match "" $smtp]} {
-	set smtp [ns_config ns/parameters mailhost]
+        set smtp [ns_config ns/parameters mailhost]
     }
     if {[string match "" $smtp]} {
-	set smtp localhost
+        set smtp localhost
     }
     set timeout [ns_config ns/parameters smtptimeout]
     if {[string match "" $timeout]} {
-	set timeout 60
+        set timeout 60
     }
     set smtpport [ns_config ns/parameters smtpport]
     if {[string match "" $smtpport]} {
-	set smtpport 25
+        set smtpport 25
     }
 
     set tolist [list]
     foreach toaddr $tolist_in {
-	lappend tolist "[string trim $toaddr]"
+        lappend tolist "[string trim $toaddr]"
     }
-    
+
     set bcclist [list]
     if {![string match "" $bcclist_in]} {
-	foreach bccaddr $bcclist_in {
-	    lappend bcclist "[string trim $bccaddr]"
-	}
+        foreach bccaddr $bcclist_in {
+            lappend bcclist "[string trim $bccaddr]"
+        }
     }
-    
+
     ## Send it along to _ns_sendmail
     _ns_sendmail $smtp $smtpport $timeout $tolist $bcclist \
-	    $from $subject $body $extraheaders
+            $from $subject $body $extraheaders
 }
 
 
 proc _ns_sendmail {smtp smtpport timeout tolist bcclist \
-	from subject body extraheaders} {
-    
+        from subject body extraheaders} {
+
     ## Put the tolist in the headers
     set rfcto [join $tolist ", "]
-    
+
     ## Build headers
     set msg "To: $rfcto\nFrom: $from\nSubject: $subject\nDate: [ns_httptime [ns_time]]"
-    
+
     ## Insert extra headers, if any (not for BCC)
     if {![string match "" $extraheaders]} {
-	set size [ns_set size $extraheaders]
-	for {set i 0} {$i < $size} {incr i} {
-	    append msg "\n[ns_set key $extraheaders $i]: [ns_set value $extraheaders $i]"
-	}
+        set size [ns_set size $extraheaders]
+        for {set i 0} {$i < $size} {incr i} {
+            append msg "\n[ns_set key $extraheaders $i]: [ns_set value $extraheaders $i]"
+        }
     }
-    
+
     ## Blank line between headers and body
     append msg "\n\n$body\n"
-    
+
     ## Terminate body with a solitary period
-    foreach line [split $msg "\n"] { 
-	if {[string match . $line]} {
-	    append data .
-	}
-	append data $line
-	append data "\r\n"
+    foreach line [split $msg "\n"] {
+        if {[string match . $line]} {
+            append data .
+        }
+        append data $line
+        append data "\r\n"
     }
     append data .
-    
+
     ## Open the connection
     set sock [ns_sockopen $smtp $smtpport]
     set rfp [lindex $sock 0]
     set wfp [lindex $sock 1]
-  
+
     ## Strip "from:" email address
     regexp {.*<(.*)>} $from ig from
 
     ## Perform the SMTP conversation
     if { [catch {
-	_ns_smtp_recv $rfp 220 $timeout
-	_ns_smtp_send $wfp "HELO [ns_info hostname]" $timeout
-	_ns_smtp_recv $rfp 250 $timeout
-	_ns_smtp_send $wfp "MAIL FROM:<$from>" $timeout
-	_ns_smtp_recv $rfp 250 $timeout
-	
-	## Loop through To and BCC list via multiple RCPT TO lines
+        _ns_smtp_recv $rfp 220 $timeout
+        _ns_smtp_send $wfp "HELO [ns_info hostname]" $timeout
+        _ns_smtp_recv $rfp 250 $timeout
+        _ns_smtp_send $wfp "MAIL FROM:<$from>" $timeout
+        _ns_smtp_recv $rfp 250 $timeout
+
+        ## Loop through To and BCC list via multiple RCPT TO lines
         ## A BCC should never, ever appear in the header
-	foreach toto [concat $tolist $bcclist] {
+        foreach toto [concat $tolist $bcclist] {
              #transform "Fritz <fritz@foo.com>" into "fritz@foo.com"
             regexp {.*<(.*)>} $toto ig toto
-	    _ns_smtp_send $wfp "RCPT TO:<$toto>" $timeout
-	    _ns_smtp_recv $rfp 250 $timeout	
-	}
-	
-	_ns_smtp_send $wfp DATA $timeout
-	_ns_smtp_recv $rfp 354 $timeout
-	_ns_smtp_send $wfp $data $timeout
-	_ns_smtp_recv $rfp 250 $timeout
-	_ns_smtp_send $wfp QUIT $timeout
-	_ns_smtp_recv $rfp 221 $timeout
+            _ns_smtp_send $wfp "RCPT TO:<$toto>" $timeout
+            _ns_smtp_recv $rfp 250 $timeout
+        }
+
+        _ns_smtp_send $wfp DATA $timeout
+        _ns_smtp_recv $rfp 354 $timeout
+        _ns_smtp_send $wfp $data $timeout
+        _ns_smtp_recv $rfp 250 $timeout
+        _ns_smtp_send $wfp QUIT $timeout
+        _ns_smtp_recv $rfp 221 $timeout
     } errMsg ] } {
-	## Error, close and report
-	close $rfp
-	close $wfp
-	return -code error $errMsg
+        ## Error, close and report
+        close $rfp
+        close $wfp
+        return -code error $errMsg
     }
 
     ## Close the connection
