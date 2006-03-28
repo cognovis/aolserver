@@ -110,6 +110,15 @@ Ns_NormalizePath(Ns_DString *dsPtr, char *path)
 	}
 	Ns_DStringNAppend(dsPtr, src, 2);
 	src += 2;
+    } else if (isslash(src[0]) && isslash(src[1])) {
+        /*
+         * We have TWO leading slashes as in the Windows pathname
+         * "//machine/foo/bar".  The code further below will write 1
+         * slash, so here, add just 1 slash so that we will end up
+         * with 2 total: --atp@piskorski.com, 2005/03/14 06:34 EST
+         */
+	Ns_DStringNAppend(dsPtr, src, 1);
+	src += 2;
     }
 #endif
 
