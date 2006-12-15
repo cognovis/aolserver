@@ -773,6 +773,12 @@ DriverThread(void *ignored)
     }
 
     /*
+     * Register an at-ready callback to trigger the poll.
+     */
+
+    Ns_RegisterAtReady(SockTrigger, NULL);
+
+    /*
      * Loop forever until signalled to shutdown and all
      * connections are complete and gracefully closed.
      */
