@@ -236,7 +236,6 @@ NS_EXTERN int			kill(int pid, int sig);
 #define SOCKET			int
 #define INVALID_SOCKET	        (-1)
 #define SOCKET_ERROR	        (-1)
-#define NS_EXPORT
 #define ns_sockclose		close
 #define ns_socknbclose		close
 #define ns_sockioctl		ioctl
@@ -1393,6 +1392,11 @@ NS_EXTERN Ns_ConnFile *Ns_ConnNextFile(Tcl_HashSearch *searchPtr);
 #define Ns_UrlDecode(p,u)       Ns_DecodeUrlCharset(p,u,NULL)
 #define Ns_EncodeUrl(p,u)       Ns_EncodeUrlCharset(p,u,NULL)
 #define Ns_DecodeUrl(p,u)       Ns_DecodeUrlCharset(p,u,NULL)
+#endif
+
+/* Module init proc automatic export */
+#ifdef NS_MODINIT
+NS_EXPORT Ns_ModuleInitProc NS_MODINIT;
 #endif
 
 #endif /* NS_H */
